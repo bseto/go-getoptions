@@ -1,0 +1,90 @@
+= Parsing
+
+First read the CLI line and the use isOptionV2 on each element to get a list of option pairs.
+
+isOptionV2 - Enhanced version of isOption, this one returns pairs of options and arguments
+At this level we don't agregate results in case we have -- and then other options, basically we can parse one option at a time.
+
+type optionPair struct {
+	Option string
+	// We allow multiple args in case of splitting on comma.
+	Args []string
+}
+
+
+== What I want
+
+AST that looks like this:
+
+NOTE: I could start at this level and have an array or CLIargs as a parse result or I could do one level up and have a root CLIarg type with the name of the program.
+Having the root level might be helpful with help generation.
+
+CLIarg{
+	Type: 0, # 0 - program name, 1 - text, 2 - option, 3 - command, 4 - terminator (--)
+	Name: os.Args[0],
+	Children: [
+		CLIarg{
+			Type: 1, # 0 - text, 1 - option, 2 - command, 3 - terminator (--)
+			Name: "force",
+			Args: [],
+			Children: nil,
+		},
+		CLIarg{
+			Type: 1,
+			Name: "verbosity",
+			Args: [2],
+			Children: nil,
+		},
+		CLIarg{
+			Type: 0,
+			Name: "sometext_dirname", # Text allowed anywhere, should there be an option for it?
+			Args: [],
+			Children: nil,
+		}
+		CLIarg{
+			Type: 1,
+			Name: "profile",
+			Args: ["dev"],
+			Children: nil,
+		}
+		CLIarg{
+			Type: 2,
+			Name: "command1",
+			Args: [],
+			Children: [
+				CLIarg{
+					Type: 2,
+					Name: "subcommand1",
+					Args: [],
+					Children: [
+						CLIarg{
+							Type: 1,
+							Name: "opt1",
+							Args: ["hello", "hola,adios"], # split on comma is not done at this level
+							Children: nil,
+						},
+						CLIarg{
+							Type: 1,
+							Name: "opt2",
+							Args: ["lang=en", "def=hello"],
+							Children: nil,
+						},
+						CLIarg{
+							Type: 3,
+							Name: "--",
+							Args: [],
+							Children: [
+								CLIarg{
+									Type: 0,
+									Name: "command1", # shouldn't match anything
+									Args: [],
+									Children, nil,
+								},
+							],
+						},
+					],
+				},
+			],
+		},
+	],
+}
