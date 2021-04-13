@@ -87,24 +87,25 @@ func TestTrees(t *testing.T) {
 		tests := []struct {
 			name     string
 			args     []string
+			mode     Mode
 			expected *CLIArg
 		}{
-			{"empty", nil, &CLIArg{
+			{"empty", nil, Normal, &CLIArg{
 				Type:     argTypeProgname,
 				Name:     os.Args[0],
 				Args:     []string{},
 				Children: []*CLIArg{},
 			}},
-			{"empty", []string{}, &CLIArg{
+			{"empty", []string{}, Normal, &CLIArg{
 				Type:     argTypeProgname,
 				Name:     os.Args[0],
 				Args:     []string{},
 				Children: []*CLIArg{},
 			}},
-			{"arg", []string{"opt1"}, &CLIArg{
+			{"arg", []string{"--opt1"}, Normal, &CLIArg{
 				Type: argTypeProgname,
 				Name: os.Args[0],
-				Args: []string{"opt1"},
+				Args: []string{"--opt1"},
 				Children: []*CLIArg{
 					{
 						Type:     argTypeOption,
@@ -117,7 +118,7 @@ func TestTrees(t *testing.T) {
 		}
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				argTree := parseCLIArgs(tree, test.args)
+				argTree := parseCLIArgs(tree, test.args, test.mode)
 				if !reflect.DeepEqual(test.expected, argTree) {
 					t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(test.expected), spew.Sdump(argTree))
 				}
@@ -136,35 +137,35 @@ func TestIsOption(t *testing.T) {
 		expected []*CLIArg
 		isOption bool
 	}{
-		{"lone dash", "-", Normal, []*CLIArg{{Type: argTypeOption, Name: "-"}}, true},
-		{"lone dash", "-", Bundling, []*CLIArg{{Type: argTypeOption, Name: "-"}}, true},
-		{"lone dash", "-", SingleDash, []*CLIArg{{Type: argTypeOption, Name: "-"}}, true},
+		{"lone dash", "-", Normal, []*CLIArg{NewCLIArg(argTypeOption, "-")}, true},
+		{"lone dash", "-", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "-")}, true},
+		{"lone dash", "-", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "-")}, true},
 
 		// TODO: Lets not return an option here
 		// Lets let the caller identify this.
-		{"double dash", "--", Normal, []*CLIArg{{Type: argTypeTerminator, Name: "--"}}, false},
-		{"double dash", "--", Bundling, []*CLIArg{{Type: argTypeTerminator, Name: "--"}}, false},
-		{"double dash", "--", SingleDash, []*CLIArg{{Type: argTypeTerminator, Name: "--"}}, false},
+		{"double dash", "--", Normal, []*CLIArg{NewCLIArg(argTypeTerminator, "--")}, false},
+		{"double dash", "--", Bundling, []*CLIArg{NewCLIArg(argTypeTerminator, "--")}, false},
+		{"double dash", "--", SingleDash, []*CLIArg{NewCLIArg(argTypeTerminator, "--")}, false},
 
 		{"no option", "opt", Normal, []*CLIArg{}, false},
 		{"no option", "opt", Bundling, []*CLIArg{}, false},
 		{"no option", "opt", SingleDash, []*CLIArg{}, false},
 
-		{"Long option", "--opt", Normal, []*CLIArg{{Type: argTypeOption, Name: "opt"}}, true},
-		{"Long option", "--opt", Bundling, []*CLIArg{{Type: argTypeOption, Name: "opt"}}, true},
-		{"Long option", "--opt", SingleDash, []*CLIArg{{Type: argTypeOption, Name: "opt"}}, true},
+		{"Long option", "--opt", Normal, []*CLIArg{NewCLIArg(argTypeOption, "opt")}, true},
+		{"Long option", "--opt", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "opt")}, true},
+		{"Long option", "--opt", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "opt")}, true},
 
-		{"Long option with arg", "--opt=arg", Normal, []*CLIArg{{Type: argTypeOption, Name: "opt", Args: []string{"arg"}}}, true},
-		{"Long option with arg", "--opt=arg", Bundling, []*CLIArg{{Type: argTypeOption, Name: "opt", Args: []string{"arg"}}}, true},
-		{"Long option with arg", "--opt=arg", SingleDash, []*CLIArg{{Type: argTypeOption, Name: "opt", Args: []string{"arg"}}}, true},
+		{"Long option with arg", "--opt=arg", Normal, []*CLIArg{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"Long option with arg", "--opt=arg", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"Long option with arg", "--opt=arg", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "opt", "arg")}, true},
 
-		{"short option", "-opt", Normal, []*CLIArg{{Type: argTypeOption, Name: "opt"}}, true},
-		{"short option", "-opt", Bundling, []*CLIArg{{Type: argTypeOption, Name: "o"}, {Type: argTypeOption, Name: "p"}, {Type: argTypeOption, Name: "t"}}, true},
-		{"short option", "-opt", SingleDash, []*CLIArg{{Type: argTypeOption, Name: "o", Args: []string{"pt"}}}, true},
+		{"short option", "-opt", Normal, []*CLIArg{NewCLIArg(argTypeOption, "opt")}, true},
+		{"short option", "-opt", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t")}, true},
+		{"short option", "-opt", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "o", "pt")}, true},
 
-		{"short option with arg", "-opt=arg", Normal, []*CLIArg{{Type: argTypeOption, Name: "opt", Args: []string{"arg"}}}, true},
-		{"short option with arg", "-opt=arg", Bundling, []*CLIArg{{Type: argTypeOption, Name: "o"}, {Type: argTypeOption, Name: "p"}, {Type: argTypeOption, Name: "t", Args: []string{"arg"}}}, true},
-		{"short option with arg", "-opt=arg", SingleDash, []*CLIArg{{Type: argTypeOption, Name: "o", Args: []string{"pt=arg"}}}, true},
+		{"short option with arg", "-opt=arg", Normal, []*CLIArg{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"short option with arg", "-opt=arg", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t", "arg")}, true},
+		{"short option with arg", "-opt=arg", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "o", "pt=arg")}, true},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {

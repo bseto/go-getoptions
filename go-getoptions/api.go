@@ -27,6 +27,19 @@ type CLIArg struct {
 	Children []*CLIArg
 }
 
+func NewCLIArg(t argType, name string, args ...string) *CLIArg {
+	arg := &CLIArg{
+		Type:     t,
+		Name:     name,
+		Args:     []string{},
+		Children: []*CLIArg{},
+	}
+	if len(args) > 0 {
+		arg.Args = args
+	}
+	return arg
+}
+
 type CLITree struct {
 	Type     argType
 	Name     string
@@ -34,7 +47,7 @@ type CLITree struct {
 	Parent   *CLITree
 }
 
-func parseCLIArgs(tree *CLITree, args []string) *CLIArg {
+func parseCLIArgs(tree *CLITree, args []string, mode Mode) *CLIArg {
 	// Design: This function could return an array or CLIargs as a parse result
 	// or I could do one level up and have a root CLIarg type with the name of
 	// the program.  Having the root level might be helpful with help generation.
@@ -58,11 +71,14 @@ func parseCLIArgs(tree *CLITree, args []string) *CLIArg {
 		args = []string{}
 	}
 
-	root := &CLIArg{
-		Type:     argTypeProgname,
-		Name:     os.Args[0],
-		Args:     args, // Copy of the original args
-		Children: []*CLIArg{},
+	root := NewCLIArg(argTypeProgname, os.Args[0], args...)
+
+	currentOpt := root
+	for _, arg := range args {
+		cliArg, is := isOption(arg, mode)
+		if is {
+			currentOpt.Children = append(currentOpt.Children, cliArg...)
+		}
 	}
 	return root
 }
@@ -133,19 +149,16 @@ TODO: Here is where we should handle windows /option types.
 func isOption(s string, mode Mode) ([]*CLIArg, bool) {
 	// Handle especial cases
 	if s == "--" {
-		return []*CLIArg{{Type: argTypeTerminator, Name: "--"}}, false
+		return []*CLIArg{NewCLIArg(argTypeTerminator, "--")}, false
 	} else if s == "-" {
-		return []*CLIArg{{Type: argTypeOption, Name: "-"}}, true
+		return []*CLIArg{NewCLIArg(argTypeOption, "-")}, true
 	}
 
 	match := isOptionRegex.FindStringSubmatch(s)
 	if len(match) > 0 {
 		// check long option
 		if match[1] == "--" {
-			opt := &CLIArg{
-				Type: argTypeOption,
-				Name: match[2],
-			}
+			opt := NewCLIArg(argTypeOption, match[2])
 			args := strings.TrimPrefix(match[3], "=")
 			if args != "" {
 				// TODO: Here is where we could split on comma
@@ -158,7 +171,7 @@ func isOption(s string, mode Mode) ([]*CLIArg, bool) {
 		case Bundling:
 			opts := []*CLIArg{}
 			for _, option := range strings.Split(match[2], "") {
-				opt := &CLIArg{Type: argTypeOption, Name: option}
+				opt := NewCLIArg(argTypeOption, option)
 				opts = append(opts, opt)
 			}
 			if len(opts) > 0 {
@@ -171,7 +184,7 @@ func isOption(s string, mode Mode) ([]*CLIArg, bool) {
 		case SingleDash:
 			opts := []*CLIArg{}
 			for _, option := range []string{strings.Split(match[2], "")[0]} {
-				opt := &CLIArg{Type: argTypeOption, Name: option}
+				opt := NewCLIArg(argTypeOption, option)
 				opts = append(opts, opt)
 			}
 			if len(opts) > 0 {
@@ -180,7 +193,7 @@ func isOption(s string, mode Mode) ([]*CLIArg, bool) {
 			}
 			return opts, true
 		default:
-			opt := &CLIArg{Type: argTypeOption, Name: match[2]}
+			opt := NewCLIArg(argTypeOption, match[2])
 			args := strings.TrimPrefix(match[3], "=")
 			if args != "" {
 				opt.Args = []string{args}
