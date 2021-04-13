@@ -12,9 +12,9 @@ type argType int
 
 const (
 	argTypeProgname argType = iota
-	argTypeText
-	argTypeOption
 	argTypeCommand
+	argTypeOption
+	argTypeText
 	argTypeTerminator // --
 )
 
@@ -50,6 +50,11 @@ func parseCLIArgs(tree *CLITree, args []string) *CLIArg {
 	// command tree.
 
 	// TODO: Question: How is text input before a command handled? Is it allowed?
+
+	// Ensure consistent response for empty and nil slices
+	if args == nil {
+		args = []string{}
+	}
 
 	root := &CLIArg{
 		Type:     argTypeProgname,
