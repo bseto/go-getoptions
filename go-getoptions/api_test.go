@@ -31,8 +31,8 @@ func TestTrees(t *testing.T) {
 	buf := setupLogging()
 	opt := New()
 	opt.String("opt1", "")
-	cmd := opt.NewCommand("cmd1", "")
-	cmd.String("cmd1opt1", "")
+	cmd1 := opt.NewCommand("cmd1", "")
+	cmd1.String("cmd1opt1", "")
 	cmd2 := opt.NewCommand("cmd2", "")
 	cmd2.String("cmd2opt1", "")
 	tree := opt.cliTree
@@ -102,7 +102,7 @@ func TestTrees(t *testing.T) {
 				Args:     []string{},
 				Children: []*CLIArg{},
 			}},
-			{"arg", []string{"--opt1"}, Normal, &CLIArg{
+			{"option", []string{"--opt1"}, Normal, &CLIArg{
 				Type: argTypeProgname,
 				Name: os.Args[0],
 				Args: []string{"--opt1"},
@@ -115,6 +115,76 @@ func TestTrees(t *testing.T) {
 					},
 				},
 			}},
+			{"terminator", []string{"--", "--opt1"}, Normal, &CLIArg{
+				Type: argTypeProgname,
+				Name: os.Args[0],
+				Args: []string{"--", "--opt1"},
+				Children: []*CLIArg{
+					{
+						Type:     argTypeText,
+						Name:     "--opt1",
+						Args:     []string{},
+						Children: []*CLIArg{},
+					},
+				},
+			}},
+			{"command", []string{"--opt1", "cmd1", "--cmd1opt1", "hello", "world"}, Normal, &CLIArg{
+				Type: argTypeProgname,
+				Name: os.Args[0],
+				Args: []string{"--opt1", "cmd1", "--cmd1opt1", "hello", "world"},
+				Children: []*CLIArg{
+					{
+						Type:     argTypeOption,
+						Name:     "opt1",
+						Args:     []string{},
+						Children: []*CLIArg{},
+					},
+					{
+						Type: argTypeCommand,
+						Name: "cmd1",
+						Args: []string{},
+						Children: []*CLIArg{
+							{
+								Type:     argTypeOption,
+								Name:     "cmd1opt1",
+								Args:     []string{},
+								Children: []*CLIArg{},
+							},
+							{
+								Type:     argTypeText,
+								Name:     "hello",
+								Args:     []string{},
+								Children: []*CLIArg{},
+							},
+							{
+								Type:     argTypeText,
+								Name:     "world",
+								Args:     []string{},
+								Children: []*CLIArg{},
+							},
+						},
+					},
+				},
+			}},
+			// {"arg", []string{"hello", "world"}, Normal, &CLIArg{
+			// 	Type: argTypeProgname,
+			// 	Name: os.Args[0],
+			// 	Args: []string{"text"},
+			// 	Children: []*CLIArg{
+			// 		{
+			// 			Type:     argTypeText,
+			// 			Name:     "hello",
+			// 			Args:     []string{},
+			// 			Children: []*CLIArg{},
+			// 		},
+			// 		{
+			// 			Type:     argTypeText,
+			// 			Name:     "world",
+			// 			Args:     []string{},
+			// 			Children: []*CLIArg{},
+			// 		},
+			// 	},
+			// }},
 		}
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {

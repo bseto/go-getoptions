@@ -74,11 +74,26 @@ func parseCLIArgs(tree *CLITree, args []string, mode Mode) *CLIArg {
 	root := NewCLIArg(argTypeProgname, os.Args[0], args...)
 
 	currentOpt := root
-	for _, arg := range args {
+	for i, arg := range args {
+
+		// handle terminator
+		if arg == "--" {
+			if len(args) > i+1 {
+				for _, arg := range args[i+1:] {
+					currentOpt.Children = append(currentOpt.Children, NewCLIArg(argTypeText, arg))
+				}
+			}
+			break
+		}
+
+		// check for option
 		cliArg, is := isOption(arg, mode)
 		if is {
 			currentOpt.Children = append(currentOpt.Children, cliArg...)
+			continue
 		}
+
+		// handle command or text
 	}
 	return root
 }
