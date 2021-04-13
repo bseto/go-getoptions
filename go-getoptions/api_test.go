@@ -27,28 +27,42 @@ func setupLogging() *bytes.Buffer {
 	return buf
 }
 
-func TestBuildTree(t *testing.T) {
+func TestCLITree(t *testing.T) {
 	buf := setupLogging()
 	opt := New()
 	opt.String("opt1", "")
-	cmd := opt.NewCommand("cmd", "")
-	cmd.String("opt2", "")
+	cmd := opt.NewCommand("cmd1", "")
+	cmd.String("cmd1opt1", "")
+	cmd2 := opt.NewCommand("cmd2", "")
+	cmd2.String("cmd2opt1", "")
 	tree := opt.cliTree
 	expectedTree := &CLITree{
 		Type:     argTypeProgname,
 		Name:     os.Args[0],
 		Children: []*CLITree{},
 	}
-	expectedTreeCmd := &CLITree{
+	expectedTreeCmd1 := &CLITree{
 		Type:     argTypeCommand,
-		Name:     "cmd",
+		Name:     "cmd1",
 		Parent:   expectedTree,
 		Children: []*CLITree{},
 	}
-	expectedTreeCmd.Children = append(expectedTreeCmd.Children, &CLITree{
+	expectedTreeCmd1.Children = append(expectedTreeCmd1.Children, &CLITree{
 		Type:     argTypeOption,
-		Name:     "opt2",
-		Parent:   expectedTreeCmd,
+		Name:     "cmd1opt1",
+		Parent:   expectedTreeCmd1,
+		Children: []*CLITree{},
+	})
+	expectedTreeCmd2 := &CLITree{
+		Type:     argTypeCommand,
+		Name:     "cmd2",
+		Parent:   expectedTree,
+		Children: []*CLITree{},
+	}
+	expectedTreeCmd2.Children = append(expectedTreeCmd2.Children, &CLITree{
+		Type:     argTypeOption,
+		Name:     "cmd2opt1",
+		Parent:   expectedTreeCmd2,
 		Children: []*CLITree{},
 	})
 	expectedTree.Children = append(expectedTree.Children, []*CLITree{
@@ -58,7 +72,8 @@ func TestBuildTree(t *testing.T) {
 			Parent:   expectedTree,
 			Children: []*CLITree{},
 		},
-		expectedTreeCmd,
+		expectedTreeCmd1,
+		expectedTreeCmd2,
 	}...)
 
 	if !reflect.DeepEqual(expectedTree, tree) {
