@@ -124,46 +124,41 @@ const (
 // 3: =arg
 var isOptionRegex = regexp.MustCompile(`^(--?)([^=]+)(.*?)$`)
 
-type optionPair struct {
-	Option string
-	// We allow multiple args in case of splitting on comma.
-	Args []string
-}
-
 /*
 isOption - Enhanced version of isOption, this one returns pairs of options and arguments
 At this level we don't agregate results in case we have -- and then other options, basically we can parse one option at a time.
 This makes the caller have to agregate multiple calls to the same option.
 TODO: Here is where we should handle windows /option types.
 */
-func isOption(s string, mode Mode) ([]optionPair, bool) {
+func isOption(s string, mode Mode) ([]*CLIArg, bool) {
 	// Handle especial cases
 	if s == "--" {
-		return []optionPair{{Option: "--"}}, false
+		return []*CLIArg{{Type: argTypeTerminator, Name: "--"}}, false
 	} else if s == "-" {
-		return []optionPair{{Option: "-"}}, true
+		return []*CLIArg{{Type: argTypeOption, Name: "-"}}, true
 	}
 
 	match := isOptionRegex.FindStringSubmatch(s)
 	if len(match) > 0 {
 		// check long option
 		if match[1] == "--" {
-			opt := optionPair{}
-			opt.Option = match[2]
+			opt := &CLIArg{
+				Type: argTypeOption,
+				Name: match[2],
+			}
 			args := strings.TrimPrefix(match[3], "=")
 			if args != "" {
 				// TODO: Here is where we could split on comma
 				opt.Args = []string{args}
 			}
-			return []optionPair{opt}, true
+			return []*CLIArg{opt}, true
 		}
 		// check short option
 		switch mode {
 		case Bundling:
-			opts := []optionPair{}
+			opts := []*CLIArg{}
 			for _, option := range strings.Split(match[2], "") {
-				opt := optionPair{}
-				opt.Option = option
+				opt := &CLIArg{Type: argTypeOption, Name: option}
 				opts = append(opts, opt)
 			}
 			if len(opts) > 0 {
@@ -174,10 +169,9 @@ func isOption(s string, mode Mode) ([]optionPair, bool) {
 			}
 			return opts, true
 		case SingleDash:
-			opts := []optionPair{}
+			opts := []*CLIArg{}
 			for _, option := range []string{strings.Split(match[2], "")[0]} {
-				opt := optionPair{}
-				opt.Option = option
+				opt := &CLIArg{Type: argTypeOption, Name: option}
 				opts = append(opts, opt)
 			}
 			if len(opts) > 0 {
@@ -186,14 +180,13 @@ func isOption(s string, mode Mode) ([]optionPair, bool) {
 			}
 			return opts, true
 		default:
-			opt := optionPair{}
-			opt.Option = match[2]
+			opt := &CLIArg{Type: argTypeOption, Name: match[2]}
 			args := strings.TrimPrefix(match[3], "=")
 			if args != "" {
 				opt.Args = []string{args}
 			}
-			return []optionPair{opt}, true
+			return []*CLIArg{opt}, true
 		}
 	}
-	return []optionPair{}, false
+	return []*CLIArg{}, false
 }
