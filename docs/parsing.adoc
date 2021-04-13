@@ -1,4 +1,59 @@
-= Parsing
+= Parsing CLI Args
+
+The core of the option parser is how CLI Arguments are parsed and how they are mapped to the expected program structure.
+
+The program structure is defined by:
+* The options the program expects.
+* The commands and sub commands the program can have.
+* The options the commands and subcommadns expect.
+* The arguments/text input the program, commands and subcommands expect.
+
+A proper datastructe enables the option parser to easily map CLI Arguments into the items mentioned above.
+The wrong datastructure will lead to convoluted APIs.
+
+One unexplored aspect of a proper datastructure is built-in autocompletion of commands, subcommands, options and even in some cases arguments.
+In this regard most tools generate a very large bash completion side tool.
+go-getoptions in contrast only requires a single line of bash to generate all possible completions.
+
+This documents reflects the datastructure used by go-getoptions that enables trees of commands/subcommands, options, arguments and built-in completion.
+
+== Parsing approach
+
+You cannot parse the CLI Args in isolation, to parse CLI Arguments you require the program datastructure, or at the very least, the option definition in advanced.
+
+The following example will help explain:
+
+    $ ./programname --option some text
+
+When looking at the ambiguous input above you can have the following possibilities:
+
+. Option `--option` with argument `some` plus text input `text`.
+. Option `--option` with argument `some` plus command call `text`.
+. Option `--option` with command call `some` and argument `text`.
+. Option `--option` with arguments `some` and `text` (some CLI parsers allow more than one argument per option).
+
+Those are some of the permutations you can have.
+
+Now, some option parsers ignore this complexity by forcing ordering.
+In other words, no options are allowed before calling a command.
+However, even in that case, you can't tell if `--option` expects and argument or not.
+
+=== Program Tree
+
+With the above in mind, the first step before being able to parse CLI Arguments is to build the program's datastructure.
+For go-getoptions that datastructure is defined as a double linked tree with a root node.
+
+[source, go]
+----
+type CLITree struct {
+	Type     argType
+	Name     string
+	Children []*CLITree
+	Parent   *CLITree
+}
+----
+
+=== CLI Arguments Tree
 
 First read the CLI line and the use isOptionV2 on each element to get a list of option pairs.
 
