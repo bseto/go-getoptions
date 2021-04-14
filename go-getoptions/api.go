@@ -40,14 +40,14 @@ func NewCLIArg(t argType, name string, args ...string) *CLIArg {
 	return arg
 }
 
-type CLITree struct {
+type ProgramTree struct {
 	Type     argType
 	Name     string
-	Children []*CLITree
-	Parent   *CLITree
+	Children []*ProgramTree
+	Parent   *ProgramTree
 }
 
-func parseCLIArgs(tree *CLITree, args []string, mode Mode) *CLIArg {
+func parseCLIArgs(tree *ProgramTree, args []string, mode Mode) *CLIArg {
 	// Design: This function could return an array or CLIargs as a parse result
 	// or I could do one level up and have a root CLIarg type with the name of
 	// the program.  Having the root level might be helpful with help generation.
@@ -73,8 +73,8 @@ func parseCLIArgs(tree *CLITree, args []string, mode Mode) *CLIArg {
 
 	root := NewCLIArg(argTypeProgname, os.Args[0], args...)
 
-	currentCLIArg := root
-	currentCLITree := tree
+	currentCLINode := root
+	currentProgramNode := tree
 
 ARGS_LOOP:
 	for i, arg := range args {
@@ -84,7 +84,7 @@ ARGS_LOOP:
 			if len(args) > i+1 {
 				for _, arg := range args[i+1:] {
 					// TODO: I am not checking the option against the tree here.
-					currentCLIArg.Children = append(currentCLIArg.Children, NewCLIArg(argTypeText, arg))
+					currentCLINode.Children = append(currentCLINode.Children, NewCLIArg(argTypeText, arg))
 				}
 			}
 			break
@@ -93,70 +93,70 @@ ARGS_LOOP:
 		// check for option
 		cliArg, is := isOption(arg, mode)
 		if is {
-			currentCLIArg.Children = append(currentCLIArg.Children, cliArg...)
+			currentCLINode.Children = append(currentCLINode.Children, cliArg...)
 			continue
 		}
 
 		// handle commands and subcommands
-		for _, child := range currentCLITree.Children {
+		for _, child := range currentProgramNode.Children {
 			// Only check commands
 			if child.Type != argTypeCommand {
 				continue
 			}
 			if child.Name == arg {
 				cmd := NewCLIArg(argTypeCommand, arg)
-				currentCLIArg.Children = append(currentCLIArg.Children, cmd)
-				currentCLIArg = cmd
-				currentCLITree = child
+				currentCLINode.Children = append(currentCLINode.Children, cmd)
+				currentCLINode = cmd
+				currentProgramNode = child
 				continue ARGS_LOOP
 			}
 		}
 
 		// handle text
-		currentCLIArg.Children = append(currentCLIArg.Children, NewCLIArg(argTypeText, arg))
+		currentCLINode.Children = append(currentCLINode.Children, NewCLIArg(argTypeText, arg))
 	}
 	return root
 }
 
 // TODO:
 // suggestCompletions -
-func suggestCompletions(tree *CLITree, args []string, mode Mode) {}
+func suggestCompletions(tree *ProgramTree, args []string, mode Mode) {}
 
 type GetOpt struct {
-	cliTree *CLITree
+	programTree *ProgramTree
 }
 
 type ModifyFn func(string)
 
 func New() *GetOpt {
 	gopt := &GetOpt{}
-	gopt.cliTree = &CLITree{
+	gopt.programTree = &ProgramTree{
 		Type:     argTypeProgname,
 		Name:     os.Args[0],
-		Children: []*CLITree{},
+		Children: []*ProgramTree{},
 	}
 	return gopt
 }
 
 func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 	cmd := &GetOpt{}
-	tree := &CLITree{
+	tree := &ProgramTree{
 		Type:     argTypeCommand,
 		Name:     name,
-		Children: []*CLITree{},
-		Parent:   gopt.cliTree,
+		Children: []*ProgramTree{},
+		Parent:   gopt.programTree,
 	}
-	cmd.cliTree = tree
-	gopt.cliTree.Children = append(gopt.cliTree.Children, tree)
+	cmd.programTree = tree
+	gopt.programTree.Children = append(gopt.programTree.Children, tree)
 	return cmd
 }
 
 func (gopt *GetOpt) String(name, def string, fns ...ModifyFn) *string {
-	gopt.cliTree.Children = append(gopt.cliTree.Children, &CLITree{
+	gopt.programTree.Children = append(gopt.programTree.Children, &ProgramTree{
 		Type:     argTypeOption,
 		Name:     name,
-		Children: []*CLITree{},
-		Parent:   gopt.cliTree,
+		Children: []*ProgramTree{},
+		Parent:   gopt.programTree,
 	})
 	return nil
 }
