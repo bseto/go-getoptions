@@ -214,25 +214,25 @@ func TestTrees(t *testing.T) {
 					},
 				},
 			}},
-			// {"arg", []string{"hello", "world"}, Normal, &CLIArg{
-			// 	Type: argTypeProgname,
-			// 	Name: os.Args[0],
-			// 	Args: []string{"text"},
-			// 	Children: []*CLIArg{
-			// 		{
-			// 			Type:     argTypeText,
-			// 			Name:     "hello",
-			// 			Args:     []string{},
-			// 			Children: []*CLIArg{},
-			// 		},
-			// 		{
-			// 			Type:     argTypeText,
-			// 			Name:     "world",
-			// 			Args:     []string{},
-			// 			Children: []*CLIArg{},
-			// 		},
-			// 	},
-			// }},
+			{"arg", []string{"hello", "world"}, Normal, &CLIArg{
+				Type: argTypeProgname,
+				Name: os.Args[0],
+				Args: []string{"hello", "world"},
+				Children: []*CLIArg{
+					{
+						Type:     argTypeText,
+						Name:     "hello",
+						Args:     []string{},
+						Children: []*CLIArg{},
+					},
+					{
+						Type:     argTypeText,
+						Name:     "world",
+						Args:     []string{},
+						Children: []*CLIArg{},
+					},
+				},
+			}},
 		}
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {

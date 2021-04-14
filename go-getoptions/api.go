@@ -75,6 +75,8 @@ func parseCLIArgs(tree *CLITree, args []string, mode Mode) *CLIArg {
 
 	currentCLIArg := root
 	currentCLITree := tree
+
+ARGS_LOOP:
 	for i, arg := range args {
 
 		// handle terminator
@@ -94,7 +96,7 @@ func parseCLIArgs(tree *CLITree, args []string, mode Mode) *CLIArg {
 			continue
 		}
 
-		// handle command or text
+		// handle commands and subcommands
 		for _, child := range currentCLITree.Children {
 			// Only check commands
 			if child.Type != argTypeCommand {
@@ -105,8 +107,12 @@ func parseCLIArgs(tree *CLITree, args []string, mode Mode) *CLIArg {
 				currentCLIArg.Children = append(currentCLIArg.Children, cmd)
 				currentCLIArg = cmd
 				currentCLITree = child
+				continue ARGS_LOOP
 			}
 		}
+
+		// handle text
+		currentCLIArg.Children = append(currentCLIArg.Children, NewCLIArg(argTypeText, arg))
 	}
 	return root
 }
