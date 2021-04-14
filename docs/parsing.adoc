@@ -6,7 +6,7 @@ The program structure is defined by:
 * The options the program expects.
 * The commands and sub commands the program can have.
 * The options the commands and subcommadns expect.
-* The arguments/text input the program, commands and subcommands expect.
+* The arguments or text input that the program or commands/subcommands expect.
 
 A proper datastructe enables the option parser to easily map CLI Arguments into the items mentioned above.
 The wrong datastructure will lead to convoluted APIs.
@@ -25,18 +25,16 @@ The following example will help explain:
 
     $ ./programname --option some text
 
-When looking at the ambiguous input above you can have the following possibilities:
+When looking at the ambiguous input above you can have the following possibilities (just to name a few):
 
 . Option `--option` with argument `some` plus text input `text`.
 . Option `--option` with argument `some` plus command call `text`.
 . Option `--option` with command call `some` and argument `text`.
 . Option `--option` with arguments `some` and `text` (some CLI parsers allow more than one argument per option).
 
-Those are some of the permutations you can have.
-
 Now, some option parsers ignore this complexity by forcing ordering.
 In other words, no options are allowed before calling a command.
-However, even in that case, you can't tell if `--option` expects and argument or not.
+However, even in that case, you can't tell if `--option` expects an argument or not.
 
 === Program Tree
 
@@ -53,7 +51,106 @@ type CLITree struct {
 }
 ----
 
+There are multiple types of arguments, of particular interest there are:
+
+* argTypeProgname: The root node type.
+Holds os.Args[0] as its name.
+
+* argTypeCommand: The node type used for commands and subcommands.
+
+* argTypeOption: The node type used for options.
+
+*	argTypeText: The node type used for regular cli arguments.
+
+
+Once the tree is built, the parser can walk through the tree as it walks through each of the passed in cli arguments to determine if the argument is an expected option, a command or just a text argument.
+
+Additionally, since there is a datastructure that is walked at the same time as cli arguments are parsed, the parser can suggest next level completions (by listing the children) to the shell completion system.
+
+An example tree can be found in the tests:
+
+This definition:
+
+[source, go]
+----
+	opt := New()
+	opt.String("opt1", "")
+
+	cmd1 := opt.NewCommand("cmd1", "")
+	cmd1.String("cmd1opt1", "")
+	cmd2 := opt.NewCommand("cmd2", "")
+	cmd2.String("cmd2opt1", "")
+
+	sub1cmd1 := cmd1.NewCommand("sub1cmd1", "")
+	sub1cmd1.String("sub1cmd1opt1", "")
+----
+
+Generates this tree (printed with go-spew):
+
+[source, go]
+----
+(*getoptions.CLITree)({
+	Type: (getoptions.argType) 0,
+	Name: (string) (len=47) "/tmp/go-build2358722863/b001/go-getoptions.test",
+	Children: ([]*getoptions.CLITree) (len=3) {
+		(*getoptions.CLITree)({
+			Type: (getoptions.argType) 2,
+			Name: (string) (len=4) "opt1",
+			Children: ([]*getoptions.CLITree) {
+			},
+			Parent: (*getoptions.CLITree)(<already shown>)
+		}),
+		(*getoptions.CLITree)({
+			Type: (getoptions.argType) 1,
+			Name: (string) (len=4) "cmd1",
+			Children: ([]*getoptions.CLITree) (len=2) {
+				(*getoptions.CLITree)({
+					Type: (getoptions.argType) 2,
+					Name: (string) (len=8) "cmd1opt1",
+					Children: ([]*getoptions.CLITree) {
+					},
+					Parent: (*getoptions.CLITree)(<already shown>)
+				}),
+				(*getoptions.CLITree)({
+					Type: (getoptions.argType) 1,
+					Name: (string) (len=8) "sub1cmd1",
+					Children: ([]*getoptions.CLITree) (len=1) {
+						(*getoptions.CLITree)({
+							Type: (getoptions.argType) 2,
+							Name: (string) (len=12) "sub1cmd1opt1",
+							Children: ([]*getoptions.CLITree) {
+							},
+							Parent: (*getoptions.CLITree)(<already shown>)
+						})
+					},
+					Parent: (*getoptions.CLITree)(<already shown>)
+				})
+			},
+			Parent: (*getoptions.CLITree)(<already shown>)
+		}),
+		(*getoptions.CLITree)({
+			Type: (getoptions.argType) 1,
+			Name: (string) (len=4) "cmd2",
+			Children: ([]*getoptions.CLITree) (len=1) {
+				(*getoptions.CLITree)({
+					Type: (getoptions.argType) 2,
+					Name: (string) (len=8) "cmd2opt1",
+					Children: ([]*getoptions.CLITree) {
+					},
+					Parent: (*getoptions.CLITree)(<already shown>)
+				})
+			},
+			Parent: (*getoptions.CLITree)(<already shown>)
+		})
+	},
+	Parent: (*getoptions.CLITree)(<nil>)
+})
+----
+
 === CLI Arguments Tree
+
+
+
 
 First read the CLI line and the use isOptionV2 on each element to get a list of option pairs.
 

@@ -13,11 +13,11 @@ var Logger = log.New(ioutil.Discard, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfi
 type argType int
 
 const (
-	argTypeProgname argType = iota
-	argTypeCommand
-	argTypeOption
-	argTypeText
-	argTypeTerminator // --
+	argTypeProgname   argType = iota // The root node type
+	argTypeCommand                   // The node type used for commands and subcommands
+	argTypeOption                    // The node type used for options
+	argTypeText                      // The node type used for regular cli arguments
+	argTypeTerminator                // --
 )
 
 type CLIArg struct {
@@ -83,6 +83,7 @@ ARGS_LOOP:
 		if arg == "--" {
 			if len(args) > i+1 {
 				for _, arg := range args[i+1:] {
+					// TODO: I am not checking the option against the tree here.
 					currentCLIArg.Children = append(currentCLIArg.Children, NewCLIArg(argTypeText, arg))
 				}
 			}
