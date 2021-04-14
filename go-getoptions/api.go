@@ -90,6 +90,7 @@ ARGS_LOOP:
 			break
 		}
 
+		// TODO: Handle case where option has an argument
 		// check for option
 		cliArg, is := isOption(arg, mode)
 		if is {

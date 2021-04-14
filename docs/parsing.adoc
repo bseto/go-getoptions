@@ -5,21 +5,21 @@ The core of the option parser is how CLI Arguments are parsed and how they are m
 The program structure is defined by:
 * The options the program expects.
 * The commands and sub commands the program can have.
-* The options the commands and subcommadns expect.
+* The options the commands and subcommands expect.
 * The arguments or text input that the program or commands/subcommands expect.
 
-A proper datastructe enables the option parser to easily map CLI Arguments into the items mentioned above.
-The wrong datastructure will lead to convoluted APIs.
+A proper data structure enables the option parser to easily map CLI Arguments into the items mentioned above.
+The wrong data structure will lead to convoluted APIs.
 
-One unexplored aspect of a proper datastructure is built-in autocompletion of commands, subcommands, options and even in some cases arguments.
+One unexplored aspect of a proper data structure is built-in auto-completion of commands, subcommands, options and even in some cases arguments.
 In this regard most tools generate a very large bash completion side tool.
 go-getoptions in contrast only requires a single line of bash to generate all possible completions.
 
-This documents reflects the datastructure used by go-getoptions that enables trees of commands/subcommands, options, arguments and built-in completion.
+This documents reflects the data structure used by go-getoptions that enables trees of commands/subcommands, options, arguments and built-in completion.
 
 == Parsing approach
 
-You cannot parse the CLI Args in isolation, to parse CLI Arguments you require the program datastructure, or at the very least, the option definition in advanced.
+You cannot parse the CLI Args in isolation, to parse CLI Arguments you require the program data structure, or at the very least, the option definition in advanced.
 
 The following example will help explain:
 
@@ -38,8 +38,8 @@ However, even in that case, you can't tell if `--option` expects an argument or 
 
 === Program Tree
 
-With the above in mind, the first step before being able to parse CLI Arguments is to build the program's datastructure.
-For go-getoptions that datastructure is defined as a double linked tree with a root node.
+With the above in mind, the first step before being able to parse CLI Arguments is to build the program's data structure.
+For go-getoptions that data structure is defined as a double linked tree with a root node.
 
 [source, go]
 ----
@@ -60,12 +60,12 @@ Holds os.Args[0] as its name.
 
 * argTypeOption: The node type used for options.
 
-*	argTypeText: The node type used for regular cli arguments.
+*	argTypeText: The node type used for regular CLI arguments.
 
 
-Once the tree is built, the parser can walk through the tree as it walks through each of the passed in cli arguments to determine if the argument is an expected option, a command or just a text argument.
+Once the tree is built, the parser can walk through the tree as it walks through each of the passed in CLI arguments to determine if the argument is an expected option, a command or just a text argument.
 
-Additionally, since there is a datastructure that is walked at the same time as cli arguments are parsed, the parser can suggest next level completions (by listing the children) to the shell completion system.
+Additionally, since there is a data structure that is walked at the same time as CLI arguments are parsed, the parser can suggest next level completions (by listing the children) to the shell completion system.
 
 An example tree can be found in the tests:
 
@@ -149,7 +149,26 @@ Generates this tree (printed with go-spew):
 
 === CLI Arguments Tree
 
+The workflow of parsing the given CLI Arguments goes as follows:
 
+. Handle special cases.
+Currently only `--` as the terminator.
+If found, any remaining arguments are considered to be text arguments.
+
+. Check if the argument is an option, in other words, it starts with `-` or `--`.
+The lonesome dash `-` is a valid option used in many programs to signal STDIN input.
++
+Knowing the program data structure is of particular importance at this stage to know if the option expects the following CLI argument(s) as arguments to the option.
+
+. Check if the argument is a command or a subcommand.
+This is done by comparing the program data structure to validate that the input is a valid command at any given depth.
+
+=== Error handling during parsing
+
+TODO: this section needs to be filled after validating the tool UX if presenting errors during completions.
+
+
+=== Auto-completion support
 
 
 First read the CLI line and the use isOptionV2 on each element to get a list of option pairs.
