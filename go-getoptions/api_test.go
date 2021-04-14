@@ -29,12 +29,18 @@ func setupLogging() *bytes.Buffer {
 
 func TestTrees(t *testing.T) {
 	buf := setupLogging()
+
 	opt := New()
 	opt.String("opt1", "")
+
 	cmd1 := opt.NewCommand("cmd1", "")
 	cmd1.String("cmd1opt1", "")
 	cmd2 := opt.NewCommand("cmd2", "")
 	cmd2.String("cmd2opt1", "")
+
+	sub1cmd1 := cmd1.NewCommand("sub1cmd1", "")
+	sub1cmd1.String("sub1cmd1opt1", "")
+
 	tree := opt.cliTree
 	t.Run("CLITree", func(t *testing.T) {
 		expectedTree := &CLITree{
@@ -48,10 +54,25 @@ func TestTrees(t *testing.T) {
 			Parent:   expectedTree,
 			Children: []*CLITree{},
 		}
-		expectedTreeCmd1.Children = append(expectedTreeCmd1.Children, &CLITree{
-			Type:     argTypeOption,
-			Name:     "cmd1opt1",
+		expectedTreeSub1Cmd1 := &CLITree{
+			Type:     argTypeCommand,
+			Name:     "sub1cmd1",
 			Parent:   expectedTreeCmd1,
+			Children: []*CLITree{},
+		}
+		expectedTreeCmd1.Children = append(expectedTreeCmd1.Children, []*CLITree{
+			{
+				Type:     argTypeOption,
+				Name:     "cmd1opt1",
+				Parent:   expectedTreeCmd1,
+				Children: []*CLITree{},
+			},
+			expectedTreeSub1Cmd1,
+		}...)
+		expectedTreeSub1Cmd1.Children = append(expectedTreeSub1Cmd1.Children, &CLITree{
+			Type:     argTypeOption,
+			Name:     "sub1cmd1opt1",
+			Parent:   expectedTreeSub1Cmd1,
 			Children: []*CLITree{},
 		})
 		expectedTreeCmd2 := &CLITree{
@@ -128,10 +149,36 @@ func TestTrees(t *testing.T) {
 					},
 				},
 			}},
-			{"command", []string{"--opt1", "cmd1", "--cmd1opt1", "hello", "world"}, Normal, &CLIArg{
+			{"command", []string{"--opt1", "cmd1", "--cmd1opt1"}, Normal, &CLIArg{
 				Type: argTypeProgname,
 				Name: os.Args[0],
-				Args: []string{"--opt1", "cmd1", "--cmd1opt1", "hello", "world"},
+				Args: []string{"--opt1", "cmd1", "--cmd1opt1"},
+				Children: []*CLIArg{
+					{
+						Type:     argTypeOption,
+						Name:     "opt1",
+						Args:     []string{},
+						Children: []*CLIArg{},
+					},
+					{
+						Type: argTypeCommand,
+						Name: "cmd1",
+						Args: []string{},
+						Children: []*CLIArg{
+							{
+								Type:     argTypeOption,
+								Name:     "cmd1opt1",
+								Args:     []string{},
+								Children: []*CLIArg{},
+							},
+						},
+					},
+				},
+			}},
+			{"subcommand", []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"}, Normal, &CLIArg{
+				Type: argTypeProgname,
+				Name: os.Args[0],
+				Args: []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"},
 				Children: []*CLIArg{
 					{
 						Type:     argTypeOption,
@@ -151,16 +198,17 @@ func TestTrees(t *testing.T) {
 								Children: []*CLIArg{},
 							},
 							{
-								Type:     argTypeText,
-								Name:     "hello",
-								Args:     []string{},
-								Children: []*CLIArg{},
-							},
-							{
-								Type:     argTypeText,
-								Name:     "world",
-								Args:     []string{},
-								Children: []*CLIArg{},
+								Type: argTypeCommand,
+								Name: "sub1cmd1",
+								Args: []string{},
+								Children: []*CLIArg{
+									{
+										Type:     argTypeOption,
+										Name:     "sub1cmd1opt1",
+										Args:     []string{},
+										Children: []*CLIArg{},
+									},
+								},
 							},
 						},
 					},

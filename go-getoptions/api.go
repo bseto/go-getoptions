@@ -73,14 +73,15 @@ func parseCLIArgs(tree *CLITree, args []string, mode Mode) *CLIArg {
 
 	root := NewCLIArg(argTypeProgname, os.Args[0], args...)
 
-	currentOpt := root
+	currentCLIArg := root
+	currentCLITree := tree
 	for i, arg := range args {
 
 		// handle terminator
 		if arg == "--" {
 			if len(args) > i+1 {
 				for _, arg := range args[i+1:] {
-					currentOpt.Children = append(currentOpt.Children, NewCLIArg(argTypeText, arg))
+					currentCLIArg.Children = append(currentCLIArg.Children, NewCLIArg(argTypeText, arg))
 				}
 			}
 			break
@@ -89,14 +90,30 @@ func parseCLIArgs(tree *CLITree, args []string, mode Mode) *CLIArg {
 		// check for option
 		cliArg, is := isOption(arg, mode)
 		if is {
-			currentOpt.Children = append(currentOpt.Children, cliArg...)
+			currentCLIArg.Children = append(currentCLIArg.Children, cliArg...)
 			continue
 		}
 
 		// handle command or text
+		for _, child := range currentCLITree.Children {
+			// Only check commands
+			if child.Type != argTypeCommand {
+				continue
+			}
+			if child.Name == arg {
+				cmd := NewCLIArg(argTypeCommand, arg)
+				currentCLIArg.Children = append(currentCLIArg.Children, cmd)
+				currentCLIArg = cmd
+				currentCLITree = child
+			}
+		}
 	}
 	return root
 }
+
+// TODO:
+// suggestCompletions -
+func suggestCompletions(tree *CLITree, args []string, mode Mode) {}
 
 type GetOpt struct {
 	cliTree *CLITree
