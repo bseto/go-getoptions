@@ -41,58 +41,58 @@ func TestTrees(t *testing.T) {
 	sub1cmd1 := cmd1.NewCommand("sub1cmd1", "")
 	sub1cmd1.String("sub1cmd1opt1", "")
 
-	tree := opt.cliTree
-	t.Run("CLITree", func(t *testing.T) {
-		expectedTree := &CLITree{
+	tree := opt.programTree
+	t.Run("programTree", func(t *testing.T) {
+		expectedTree := &ProgramTree{
 			Type:     argTypeProgname,
 			Name:     os.Args[0],
-			Children: []*CLITree{},
+			Children: []*ProgramTree{},
 		}
-		expectedTreeCmd1 := &CLITree{
+		expectedTreeCmd1 := &ProgramTree{
 			Type:     argTypeCommand,
 			Name:     "cmd1",
 			Parent:   expectedTree,
-			Children: []*CLITree{},
+			Children: []*ProgramTree{},
 		}
-		expectedTreeSub1Cmd1 := &CLITree{
+		expectedTreeSub1Cmd1 := &ProgramTree{
 			Type:     argTypeCommand,
 			Name:     "sub1cmd1",
 			Parent:   expectedTreeCmd1,
-			Children: []*CLITree{},
+			Children: []*ProgramTree{},
 		}
-		expectedTreeCmd1.Children = append(expectedTreeCmd1.Children, []*CLITree{
+		expectedTreeCmd1.Children = append(expectedTreeCmd1.Children, []*ProgramTree{
 			{
 				Type:     argTypeOption,
 				Name:     "cmd1opt1",
 				Parent:   expectedTreeCmd1,
-				Children: []*CLITree{},
+				Children: []*ProgramTree{},
 			},
 			expectedTreeSub1Cmd1,
 		}...)
-		expectedTreeSub1Cmd1.Children = append(expectedTreeSub1Cmd1.Children, &CLITree{
+		expectedTreeSub1Cmd1.Children = append(expectedTreeSub1Cmd1.Children, &ProgramTree{
 			Type:     argTypeOption,
 			Name:     "sub1cmd1opt1",
 			Parent:   expectedTreeSub1Cmd1,
-			Children: []*CLITree{},
+			Children: []*ProgramTree{},
 		})
-		expectedTreeCmd2 := &CLITree{
+		expectedTreeCmd2 := &ProgramTree{
 			Type:     argTypeCommand,
 			Name:     "cmd2",
 			Parent:   expectedTree,
-			Children: []*CLITree{},
+			Children: []*ProgramTree{},
 		}
-		expectedTreeCmd2.Children = append(expectedTreeCmd2.Children, &CLITree{
+		expectedTreeCmd2.Children = append(expectedTreeCmd2.Children, &ProgramTree{
 			Type:     argTypeOption,
 			Name:     "cmd2opt1",
 			Parent:   expectedTreeCmd2,
-			Children: []*CLITree{},
+			Children: []*ProgramTree{},
 		})
-		expectedTree.Children = append(expectedTree.Children, []*CLITree{
+		expectedTree.Children = append(expectedTree.Children, []*ProgramTree{
 			{
 				Type:     argTypeOption,
 				Name:     "opt1",
 				Parent:   expectedTree,
-				Children: []*CLITree{},
+				Children: []*ProgramTree{},
 			},
 			expectedTreeCmd1,
 			expectedTreeCmd2,
