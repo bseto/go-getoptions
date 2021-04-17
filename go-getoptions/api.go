@@ -149,6 +149,11 @@ func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 		Children: []*ProgramTree{},
 		Parent:   gopt.programTree,
 	}
+	for _, child := range gopt.programTree.Children {
+		if child.Type == argTypeOption {
+			tree.Children = append(tree.Children, child)
+		}
+	}
 	cmd.programTree = tree
 	gopt.programTree.Children = append(gopt.programTree.Children, tree)
 	return cmd

@@ -48,10 +48,22 @@ func TestTrees(t *testing.T) {
 			Name:     os.Args[0],
 			Children: []*ProgramTree{},
 		}
+		opt1 := &ProgramTree{
+			Type:     argTypeOption,
+			Name:     "opt1",
+			Parent:   root,
+			Children: []*ProgramTree{},
+		}
 		cmd1 := &ProgramTree{
 			Type:     argTypeCommand,
 			Name:     "cmd1",
 			Parent:   root,
+			Children: []*ProgramTree{},
+		}
+		cmd1opt1 := &ProgramTree{
+			Type:     argTypeOption,
+			Name:     "cmd1opt1",
+			Parent:   cmd1,
 			Children: []*ProgramTree{},
 		}
 		sub1cmd1 := &ProgramTree{
@@ -60,42 +72,42 @@ func TestTrees(t *testing.T) {
 			Parent:   cmd1,
 			Children: []*ProgramTree{},
 		}
-		cmd1.Children = append(cmd1.Children, []*ProgramTree{
-			{
-				Type:     argTypeOption,
-				Name:     "cmd1opt1",
-				Parent:   cmd1,
-				Children: []*ProgramTree{},
-			},
-			sub1cmd1,
-		}...)
-		sub1cmd1.Children = append(sub1cmd1.Children, &ProgramTree{
+		sub1cmd1opt1 := &ProgramTree{
 			Type:     argTypeOption,
 			Name:     "sub1cmd1opt1",
 			Parent:   sub1cmd1,
 			Children: []*ProgramTree{},
-		})
+		}
 		cmd2 := &ProgramTree{
 			Type:     argTypeCommand,
 			Name:     "cmd2",
 			Parent:   root,
 			Children: []*ProgramTree{},
 		}
-		cmd2.Children = append(cmd2.Children, &ProgramTree{
+		cmd2opt1 := &ProgramTree{
 			Type:     argTypeOption,
 			Name:     "cmd2opt1",
 			Parent:   cmd2,
 			Children: []*ProgramTree{},
-		})
+		}
 		root.Children = append(root.Children, []*ProgramTree{
-			{
-				Type:     argTypeOption,
-				Name:     "opt1",
-				Parent:   root,
-				Children: []*ProgramTree{},
-			},
+			opt1,
 			cmd1,
 			cmd2,
+		}...)
+		cmd1.Children = append(cmd1.Children, []*ProgramTree{
+			opt1,
+			cmd1opt1,
+			sub1cmd1,
+		}...)
+		sub1cmd1.Children = append(sub1cmd1.Children, []*ProgramTree{
+			opt1,
+			cmd1opt1,
+			sub1cmd1opt1,
+		}...)
+		cmd2.Children = append(cmd2.Children, []*ProgramTree{
+			opt1,
+			cmd2opt1,
 		}...)
 
 		if !reflect.DeepEqual(root, tree) {
