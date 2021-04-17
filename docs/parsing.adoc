@@ -146,6 +146,16 @@ This should be allowed by default and only be disallowed when `SetRequireOrder` 
 
 One way to accomplish this is to pass the options to the child when calling `NewCommand`, in this way the actual validation of options can happen at a single level.
 
+=== Non inmediate argument to slice options that matches command
+
+* minimun has higher precedence, for example, if option has a minimun of 3 then this results in all args to opt: `program --opt arg1 command arg3`
+
+* command has the next highest precedence, for example, if option has a maximun of 2 or more, the following results in a call to command, not the word command as an argument to opt:
+`program 
+
+use `program --opt arg1 --opt command --opt arg3` instead.
+
+* optionals have lower precedence than command.
 
 == What I want
 
