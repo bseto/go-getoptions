@@ -43,63 +43,63 @@ func TestTrees(t *testing.T) {
 
 	tree := opt.programTree
 	t.Run("programTree", func(t *testing.T) {
-		expectedTree := &ProgramTree{
+		root := &ProgramTree{
 			Type:     argTypeProgname,
 			Name:     os.Args[0],
 			Children: []*ProgramTree{},
 		}
-		expectedTreeCmd1 := &ProgramTree{
+		cmd1 := &ProgramTree{
 			Type:     argTypeCommand,
 			Name:     "cmd1",
-			Parent:   expectedTree,
+			Parent:   root,
 			Children: []*ProgramTree{},
 		}
-		expectedTreeSub1Cmd1 := &ProgramTree{
+		sub1cmd1 := &ProgramTree{
 			Type:     argTypeCommand,
 			Name:     "sub1cmd1",
-			Parent:   expectedTreeCmd1,
+			Parent:   cmd1,
 			Children: []*ProgramTree{},
 		}
-		expectedTreeCmd1.Children = append(expectedTreeCmd1.Children, []*ProgramTree{
+		cmd1.Children = append(cmd1.Children, []*ProgramTree{
 			{
 				Type:     argTypeOption,
 				Name:     "cmd1opt1",
-				Parent:   expectedTreeCmd1,
+				Parent:   cmd1,
 				Children: []*ProgramTree{},
 			},
-			expectedTreeSub1Cmd1,
+			sub1cmd1,
 		}...)
-		expectedTreeSub1Cmd1.Children = append(expectedTreeSub1Cmd1.Children, &ProgramTree{
+		sub1cmd1.Children = append(sub1cmd1.Children, &ProgramTree{
 			Type:     argTypeOption,
 			Name:     "sub1cmd1opt1",
-			Parent:   expectedTreeSub1Cmd1,
+			Parent:   sub1cmd1,
 			Children: []*ProgramTree{},
 		})
-		expectedTreeCmd2 := &ProgramTree{
+		cmd2 := &ProgramTree{
 			Type:     argTypeCommand,
 			Name:     "cmd2",
-			Parent:   expectedTree,
+			Parent:   root,
 			Children: []*ProgramTree{},
 		}
-		expectedTreeCmd2.Children = append(expectedTreeCmd2.Children, &ProgramTree{
+		cmd2.Children = append(cmd2.Children, &ProgramTree{
 			Type:     argTypeOption,
 			Name:     "cmd2opt1",
-			Parent:   expectedTreeCmd2,
+			Parent:   cmd2,
 			Children: []*ProgramTree{},
 		})
-		expectedTree.Children = append(expectedTree.Children, []*ProgramTree{
+		root.Children = append(root.Children, []*ProgramTree{
 			{
 				Type:     argTypeOption,
 				Name:     "opt1",
-				Parent:   expectedTree,
+				Parent:   root,
 				Children: []*ProgramTree{},
 			},
-			expectedTreeCmd1,
-			expectedTreeCmd2,
+			cmd1,
+			cmd2,
 		}...)
 
-		if !reflect.DeepEqual(expectedTree, tree) {
-			t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(expectedTree), spew.Sdump(tree))
+		if !reflect.DeepEqual(root, tree) {
+			t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(root), spew.Sdump(tree))
 		}
 	})
 
