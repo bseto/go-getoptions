@@ -1,6 +1,7 @@
 package getoptions
 
 import (
+	"context"
 	"io/ioutil"
 	"log"
 	"os"
@@ -45,7 +46,26 @@ type ProgramTree struct {
 	Name     string
 	Children []*ProgramTree
 	Parent   *ProgramTree
+	OptionFields
+	CommandFields
 }
+
+// OptionFields - Fields that only make sense for an Option
+type OptionFields struct {
+	Aliases  []string
+	Args     []string
+	Called   bool
+	CalledAs string
+	Min, Max int // Minimum and Maximun amount of fields to pass to option in one call.
+}
+
+// CommandFields - Fields that only make sense for a Command
+type CommandFields struct {
+	CommandFn CommandFn
+}
+
+// CommandFn - Function signature for commands
+type CommandFn func(context.Context, *GetOpt, []string) error
 
 func parseCLIArgs(tree *ProgramTree, args []string, mode Mode) *CLIArg {
 	// Design: This function could return an array or CLIargs as a parse result
