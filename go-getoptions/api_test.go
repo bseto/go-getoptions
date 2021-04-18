@@ -30,19 +30,22 @@ func setupLogging() *bytes.Buffer {
 func TestTrees(t *testing.T) {
 	buf := setupLogging()
 
-	opt := New()
-	opt.String("opt1", "")
+	setupOpt := func() *GetOpt {
+		opt := New()
+		opt.String("opt1", "")
 
-	cmd1 := opt.NewCommand("cmd1", "")
-	cmd1.String("cmd1opt1", "")
-	cmd2 := opt.NewCommand("cmd2", "")
-	cmd2.String("cmd2opt1", "")
+		cmd1 := opt.NewCommand("cmd1", "")
+		cmd1.String("cmd1opt1", "")
+		cmd2 := opt.NewCommand("cmd2", "")
+		cmd2.String("cmd2opt1", "")
 
-	sub1cmd1 := cmd1.NewCommand("sub1cmd1", "")
-	sub1cmd1.String("sub1cmd1opt1", "")
+		sub1cmd1 := cmd1.NewCommand("sub1cmd1", "")
+		sub1cmd1.String("sub1cmd1opt1", "")
+		return opt
+	}
 
-	tree := opt.programTree
 	t.Run("programTree", func(t *testing.T) {
+		tree := setupOpt().programTree
 		root := &ProgramTree{
 			Type:     argTypeProgname,
 			Name:     os.Args[0],
@@ -116,6 +119,7 @@ func TestTrees(t *testing.T) {
 	})
 
 	t.Run("CLIArg", func(t *testing.T) {
+		tree := setupOpt().programTree
 
 		tests := []struct {
 			name     string
