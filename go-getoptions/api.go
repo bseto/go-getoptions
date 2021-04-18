@@ -4,6 +4,28 @@ import (
 	"os"
 )
 
+type programTree struct {
+	Type     argType
+	Name     string
+	Children []*programTree
+	Parent   *programTree
+	option
+	command
+}
+
+func getNode(tree *programTree, element ...string) (*programTree, error) {
+	if len(element) == 0 {
+		return tree, nil
+	}
+	currentNode := tree
+	for _, child := range currentNode.Children {
+		if child.Name == element[0] {
+			return getNode(child, element[1:]...)
+		}
+	}
+	return tree, nil
+}
+
 type argType int
 
 const (
@@ -13,28 +35,6 @@ const (
 	argTypeText                      // The node type used for regular cli arguments
 	argTypeTerminator                // --
 )
-
-func newCLIArg(t argType, name string, args ...string) *programTree {
-	arg := &programTree{
-		Type:     t,
-		Name:     name,
-		Children: []*programTree{},
-		option:   option{Args: []string{}},
-	}
-	if len(args) > 0 {
-		arg.Args = args
-	}
-	return arg
-}
-
-type programTree struct {
-	Type     argType
-	Name     string
-	Children []*programTree
-	Parent   *programTree
-	option
-	command
-}
 
 // option - Fields that only make sense for an option
 type option struct {
@@ -48,6 +48,19 @@ type option struct {
 // command - Fields that only make sense for a command
 type command struct {
 	CommandFn CommandFn
+}
+
+func newCLIArg(t argType, name string, args ...string) *programTree {
+	arg := &programTree{
+		Type:     t,
+		Name:     name,
+		Children: []*programTree{},
+		option:   option{Args: []string{}},
+	}
+	if len(args) > 0 {
+		arg.Args = args
+	}
+	return arg
 }
 
 func parseCLIArgs(tree *programTree, args []string, mode Mode) *programTree {

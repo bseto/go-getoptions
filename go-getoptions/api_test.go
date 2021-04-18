@@ -27,22 +27,22 @@ func setupLogging() *bytes.Buffer {
 	return buf
 }
 
+func setupOpt() *GetOpt {
+	opt := New()
+	opt.String("opt1", "")
+
+	cmd1 := opt.NewCommand("cmd1", "")
+	cmd1.String("cmd1opt1", "")
+	cmd2 := opt.NewCommand("cmd2", "")
+	cmd2.String("cmd2opt1", "")
+
+	sub1cmd1 := cmd1.NewCommand("sub1cmd1", "")
+	sub1cmd1.String("sub1cmd1opt1", "")
+	return opt
+}
+
 func TestTrees(t *testing.T) {
 	buf := setupLogging()
-
-	setupOpt := func() *GetOpt {
-		opt := New()
-		opt.String("opt1", "")
-
-		cmd1 := opt.NewCommand("cmd1", "")
-		cmd1.String("cmd1opt1", "")
-		cmd2 := opt.NewCommand("cmd2", "")
-		cmd2.String("cmd2opt1", "")
-
-		sub1cmd1 := cmd1.NewCommand("sub1cmd1", "")
-		sub1cmd1.String("sub1cmd1opt1", "")
-		return opt
-	}
 
 	t.Run("programTree", func(t *testing.T) {
 		tree := setupOpt().programTree
@@ -116,6 +116,52 @@ func TestTrees(t *testing.T) {
 		if !reflect.DeepEqual(root, tree) {
 			t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(root), spew.Sdump(tree))
 		}
+
+		n, err := getNode(tree)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if !reflect.DeepEqual(root, n) {
+			t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(root), spew.Sdump(tree))
+		}
+
+		n, err = getNode(tree, []string{}...)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if !reflect.DeepEqual(root, n) {
+			t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(root), spew.Sdump(tree))
+		}
+
+		n, err = getNode(tree, "cmd1")
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if !reflect.DeepEqual(cmd1, n) {
+			t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(root), spew.Sdump(tree))
+		}
+
+		n, err = getNode(tree, "cmd1", "sub1cmd1")
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if !reflect.DeepEqual(sub1cmd1, n) {
+			t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(root), spew.Sdump(tree))
+		}
+
+		n, err = getNode(tree, "cmd2")
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if !reflect.DeepEqual(cmd2, n) {
+			t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(root), spew.Sdump(tree))
+		}
+
 	})
 
 	t.Run("CLIArg", func(t *testing.T) {
