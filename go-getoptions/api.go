@@ -14,11 +14,11 @@ const (
 	argTypeTerminator                // --
 )
 
-func NewCLIArg(t argType, name string, args ...string) *ProgramTree {
-	arg := &ProgramTree{
+func NewCLIArg(t argType, name string, args ...string) *programTree {
+	arg := &programTree{
 		Type:     t,
 		Name:     name,
-		Children: []*ProgramTree{},
+		Children: []*programTree{},
 		Option:   Option{Args: []string{}},
 	}
 	if len(args) > 0 {
@@ -27,11 +27,11 @@ func NewCLIArg(t argType, name string, args ...string) *ProgramTree {
 	return arg
 }
 
-type ProgramTree struct {
+type programTree struct {
 	Type     argType
 	Name     string
-	Children []*ProgramTree
-	Parent   *ProgramTree
+	Children []*programTree
+	Parent   *programTree
 	Option
 	Command
 }
@@ -50,7 +50,7 @@ type Command struct {
 	CommandFn CommandFn
 }
 
-func parseCLIArgs(tree *ProgramTree, args []string, mode Mode) *ProgramTree {
+func parseCLIArgs(tree *programTree, args []string, mode Mode) *programTree {
 	// Design: This function could return an array or CLIargs as a parse result
 	// or I could do one level up and have a root CLIarg type with the name of
 	// the program.  Having the root level might be helpful with help generation.
@@ -126,4 +126,4 @@ ARGS_LOOP:
 
 // TODO:
 // suggestCompletions -
-func suggestCompletions(tree *ProgramTree, args []string, mode Mode) {}
+func suggestCompletions(tree *programTree, args []string, mode Mode) {}

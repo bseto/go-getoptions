@@ -16,12 +16,12 @@ At this level we don't agregate results in case we have -- and then other option
 This makes the caller have to agregate multiple calls to the same option.
 TODO: Here is where we should handle windows /option types.
 */
-func isOption(s string, mode Mode) ([]*ProgramTree, bool) {
+func isOption(s string, mode Mode) ([]*programTree, bool) {
 	// Handle especial cases
 	if s == "--" {
-		return []*ProgramTree{NewCLIArg(argTypeTerminator, "--")}, false
+		return []*programTree{NewCLIArg(argTypeTerminator, "--")}, false
 	} else if s == "-" {
-		return []*ProgramTree{NewCLIArg(argTypeOption, "-")}, true
+		return []*programTree{NewCLIArg(argTypeOption, "-")}, true
 	}
 
 	match := isOptionRegex.FindStringSubmatch(s)
@@ -34,12 +34,12 @@ func isOption(s string, mode Mode) ([]*ProgramTree, bool) {
 				// TODO: Here is where we could split on comma
 				opt.Args = []string{args}
 			}
-			return []*ProgramTree{opt}, true
+			return []*programTree{opt}, true
 		}
 		// check short option
 		switch mode {
 		case Bundling:
-			opts := []*ProgramTree{}
+			opts := []*programTree{}
 			for _, option := range strings.Split(match[2], "") {
 				opt := NewCLIArg(argTypeOption, option)
 				opts = append(opts, opt)
@@ -52,7 +52,7 @@ func isOption(s string, mode Mode) ([]*ProgramTree, bool) {
 			}
 			return opts, true
 		case SingleDash:
-			opts := []*ProgramTree{}
+			opts := []*programTree{}
 			for _, option := range []string{strings.Split(match[2], "")[0]} {
 				opt := NewCLIArg(argTypeOption, option)
 				opts = append(opts, opt)
@@ -68,8 +68,8 @@ func isOption(s string, mode Mode) ([]*ProgramTree, bool) {
 			if args != "" {
 				opt.Args = []string{args}
 			}
-			return []*ProgramTree{opt}, true
+			return []*programTree{opt}, true
 		}
 	}
-	return []*ProgramTree{}, false
+	return []*programTree{}, false
 }

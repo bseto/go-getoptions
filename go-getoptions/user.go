@@ -7,11 +7,10 @@ import (
 	"os"
 )
 
-
 var Logger = log.New(ioutil.Discard, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 type GetOpt struct {
-	programTree *ProgramTree
+	programTree *programTree
 }
 
 // Mode - Operation mode for short options
@@ -31,20 +30,20 @@ type ModifyFn func(string)
 
 func New() *GetOpt {
 	gopt := &GetOpt{}
-	gopt.programTree = &ProgramTree{
+	gopt.programTree = &programTree{
 		Type:     argTypeProgname,
 		Name:     os.Args[0],
-		Children: []*ProgramTree{},
+		Children: []*programTree{},
 	}
 	return gopt
 }
 
 func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 	cmd := &GetOpt{}
-	tree := &ProgramTree{
+	tree := &programTree{
 		Type:     argTypeCommand,
 		Name:     name,
-		Children: []*ProgramTree{},
+		Children: []*programTree{},
 		Parent:   gopt.programTree,
 	}
 	for _, child := range gopt.programTree.Children {
@@ -58,10 +57,10 @@ func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 }
 
 func (gopt *GetOpt) String(name, def string, fns ...ModifyFn) *string {
-	gopt.programTree.Children = append(gopt.programTree.Children, &ProgramTree{
+	gopt.programTree.Children = append(gopt.programTree.Children, &programTree{
 		Type:     argTypeOption,
 		Name:     name,
-		Children: []*ProgramTree{},
+		Children: []*programTree{},
 		Parent:   gopt.programTree,
 	})
 	return nil

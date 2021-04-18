@@ -12,38 +12,38 @@ func TestIsOption(t *testing.T) {
 		name     string
 		inputArg string
 		mode     Mode
-		expected []*ProgramTree
+		expected []*programTree
 		isOption bool
 	}{
-		{"lone dash", "-", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "-")}, true},
-		{"lone dash", "-", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "-")}, true},
-		{"lone dash", "-", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "-")}, true},
+		{"lone dash", "-", Normal, []*programTree{NewCLIArg(argTypeOption, "-")}, true},
+		{"lone dash", "-", Bundling, []*programTree{NewCLIArg(argTypeOption, "-")}, true},
+		{"lone dash", "-", SingleDash, []*programTree{NewCLIArg(argTypeOption, "-")}, true},
 
 		// TODO: Lets not return an option here
 		// Lets let the caller identify this.
-		{"double dash", "--", Normal, []*ProgramTree{NewCLIArg(argTypeTerminator, "--")}, false},
-		{"double dash", "--", Bundling, []*ProgramTree{NewCLIArg(argTypeTerminator, "--")}, false},
-		{"double dash", "--", SingleDash, []*ProgramTree{NewCLIArg(argTypeTerminator, "--")}, false},
+		{"double dash", "--", Normal, []*programTree{NewCLIArg(argTypeTerminator, "--")}, false},
+		{"double dash", "--", Bundling, []*programTree{NewCLIArg(argTypeTerminator, "--")}, false},
+		{"double dash", "--", SingleDash, []*programTree{NewCLIArg(argTypeTerminator, "--")}, false},
 
-		{"no option", "opt", Normal, []*ProgramTree{}, false},
-		{"no option", "opt", Bundling, []*ProgramTree{}, false},
-		{"no option", "opt", SingleDash, []*ProgramTree{}, false},
+		{"no option", "opt", Normal, []*programTree{}, false},
+		{"no option", "opt", Bundling, []*programTree{}, false},
+		{"no option", "opt", SingleDash, []*programTree{}, false},
 
-		{"Long option", "--opt", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "opt")}, true},
-		{"Long option", "--opt", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "opt")}, true},
-		{"Long option", "--opt", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "opt")}, true},
+		{"Long option", "--opt", Normal, []*programTree{NewCLIArg(argTypeOption, "opt")}, true},
+		{"Long option", "--opt", Bundling, []*programTree{NewCLIArg(argTypeOption, "opt")}, true},
+		{"Long option", "--opt", SingleDash, []*programTree{NewCLIArg(argTypeOption, "opt")}, true},
 
-		{"Long option with arg", "--opt=arg", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
-		{"Long option with arg", "--opt=arg", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
-		{"Long option with arg", "--opt=arg", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"Long option with arg", "--opt=arg", Normal, []*programTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"Long option with arg", "--opt=arg", Bundling, []*programTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"Long option with arg", "--opt=arg", SingleDash, []*programTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
 
-		{"short option", "-opt", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "opt")}, true},
-		{"short option", "-opt", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t")}, true},
-		{"short option", "-opt", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "o", "pt")}, true},
+		{"short option", "-opt", Normal, []*programTree{NewCLIArg(argTypeOption, "opt")}, true},
+		{"short option", "-opt", Bundling, []*programTree{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t")}, true},
+		{"short option", "-opt", SingleDash, []*programTree{NewCLIArg(argTypeOption, "o", "pt")}, true},
 
-		{"short option with arg", "-opt=arg", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
-		{"short option with arg", "-opt=arg", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t", "arg")}, true},
-		{"short option with arg", "-opt=arg", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "o", "pt=arg")}, true},
+		{"short option with arg", "-opt=arg", Normal, []*programTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"short option with arg", "-opt=arg", Bundling, []*programTree{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t", "arg")}, true},
+		{"short option with arg", "-opt=arg", SingleDash, []*programTree{NewCLIArg(argTypeOption, "o", "pt=arg")}, true},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
