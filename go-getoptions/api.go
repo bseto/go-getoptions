@@ -1,9 +1,5 @@
 package getoptions
 
-import (
-	"os"
-)
-
 type programTree struct {
 	Type     argType
 	Name     string
@@ -96,9 +92,6 @@ func parseCLIArgs(tree *programTree, args []string, mode Mode) *programTree {
 		args = []string{}
 	}
 
-	root := newCLIArg(argTypeProgname, os.Args[0], args...)
-
-	currentCLINode := root
 	currentProgramNode := tree
 
 ARGS_LOOP:
@@ -109,7 +102,7 @@ ARGS_LOOP:
 			if len(args) > i+1 {
 				for _, arg := range args[i+1:] {
 					// TODO: I am not checking the option against the tree here.
-					currentCLINode.Children = append(currentCLINode.Children, newCLIArg(argTypeText, arg))
+					currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, arg))
 				}
 			}
 			break
@@ -120,7 +113,7 @@ ARGS_LOOP:
 		// TODO: Handle case where option has an argument
 		// check for option
 		if cliArg, is := isOption(arg, mode); is {
-			currentCLINode.Children = append(currentCLINode.Children, cliArg...)
+			currentProgramNode.Children = append(currentProgramNode.Children, cliArg...)
 			continue
 		}
 
