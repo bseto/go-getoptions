@@ -1,7 +1,9 @@
 package getoptions
 
 import (
+	"fmt"
 	"os"
+	"strings"
 )
 
 type programTree struct {
@@ -9,8 +11,23 @@ type programTree struct {
 	Name     string
 	Children []*programTree
 	Parent   *programTree
+	Level    int
 	option
 	command
+}
+
+func (t *programTree) String() string {
+	out := strings.Repeat("  ", t.Level) + fmt.Sprintf("Name: %v, Type: %v", t.Name, t.Type)
+	if len(t.Children) > 0 {
+		out += ", children: [\n"
+		for _, child := range t.Children {
+			out += child.String()
+		}
+		out += strings.Repeat("  ", t.Level) + "]\n"
+	} else {
+		out += ", children: []\n"
+	}
+	return out
 }
 
 func getNode(tree *programTree, element ...string) (*programTree, error) {
@@ -76,12 +93,6 @@ func parseCLIArgs(tree *programTree, args []string, mode Mode) *programTree {
 	// or one argument, however, in the case of bundling mode a single string can
 	// represent multiple options.
 
-	// When parsing the cli args, there is no way to tell apart a command vs just
-	// text input to the program, one argument to this parser needs to be the
-	// command tree.
-
-	// TODO: Question: How is text input before a command handled? Is it allowed?
-
 	// Ensure consistent response for empty and nil slices
 	if args == nil {
 		args = []string{}
@@ -119,22 +130,16 @@ ARGS_LOOP:
 		// handle commands and subcommands
 		for _, child := range currentProgramNode.Children {
 			// Only check commands
-			if child.Type != argTypeCommand {
-				continue
-			}
-			if child.Name == arg {
-				cmd := newCLIArg(argTypeCommand, arg)
-				currentCLINode.Children = append(currentCLINode.Children, cmd)
-				currentCLINode = cmd
+			if child.Type == argTypeCommand && child.Name == arg {
 				currentProgramNode = child
 				continue ARGS_LOOP
 			}
 		}
 
 		// handle text
-		currentCLINode.Children = append(currentCLINode.Children, newCLIArg(argTypeText, arg))
+		currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, arg))
 	}
-	return root
+	return currentProgramNode
 }
 
 // TODO:

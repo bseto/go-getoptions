@@ -34,6 +34,7 @@ func New() *GetOpt {
 		Type:     argTypeProgname,
 		Name:     os.Args[0],
 		Children: []*programTree{},
+		Level:    0,
 	}
 	return gopt
 }
@@ -45,6 +46,7 @@ func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 		Name:     name,
 		Children: []*programTree{},
 		Parent:   gopt.programTree,
+		Level:    gopt.programTree.Level + 1,
 	}
 	for _, child := range gopt.programTree.Children {
 		if child.Type == argTypeOption {

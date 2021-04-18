@@ -29,7 +29,7 @@ func setupLogging() *bytes.Buffer {
 
 func setupOpt() *GetOpt {
 	opt := New()
-	opt.String("opt1", "")
+	opt.String("rootopt1", "")
 
 	cmd1 := opt.NewCommand("cmd1", "")
 	cmd1.String("cmd1opt1", "")
@@ -51,9 +51,9 @@ func TestTrees(t *testing.T) {
 			Name:     os.Args[0],
 			Children: []*programTree{},
 		}
-		opt1 := &programTree{
+		rootopt1 := &programTree{
 			Type:     argTypeOption,
-			Name:     "opt1",
+			Name:     "rootopt1",
 			Parent:   root,
 			Children: []*programTree{},
 		}
@@ -62,6 +62,7 @@ func TestTrees(t *testing.T) {
 			Name:     "cmd1",
 			Parent:   root,
 			Children: []*programTree{},
+			Level:    1,
 		}
 		cmd1opt1 := &programTree{
 			Type:     argTypeOption,
@@ -74,6 +75,7 @@ func TestTrees(t *testing.T) {
 			Name:     "sub1cmd1",
 			Parent:   cmd1,
 			Children: []*programTree{},
+			Level:    2,
 		}
 		sub1cmd1opt1 := &programTree{
 			Type:     argTypeOption,
@@ -86,6 +88,7 @@ func TestTrees(t *testing.T) {
 			Name:     "cmd2",
 			Parent:   root,
 			Children: []*programTree{},
+			Level:    1,
 		}
 		cmd2opt1 := &programTree{
 			Type:     argTypeOption,
@@ -94,22 +97,22 @@ func TestTrees(t *testing.T) {
 			Children: []*programTree{},
 		}
 		root.Children = append(root.Children, []*programTree{
-			opt1,
+			rootopt1,
 			cmd1,
 			cmd2,
 		}...)
 		cmd1.Children = append(cmd1.Children, []*programTree{
-			opt1,
+			rootopt1,
 			cmd1opt1,
 			sub1cmd1,
 		}...)
 		sub1cmd1.Children = append(sub1cmd1.Children, []*programTree{
-			opt1,
+			rootopt1,
 			cmd1opt1,
 			sub1cmd1opt1,
 		}...)
 		cmd2.Children = append(cmd2.Children, []*programTree{
-			opt1,
+			rootopt1,
 			cmd2opt1,
 		}...)
 
@@ -173,134 +176,131 @@ func TestTrees(t *testing.T) {
 			mode     Mode
 			expected *programTree
 		}{
-			{"empty", nil, Normal, &programTree{
-				Type:     argTypeProgname,
-				Name:     os.Args[0],
-				option:   option{Args: []string{}},
-				Children: []*programTree{},
-			}},
-			{"empty", []string{}, Normal, &programTree{
-				Type:     argTypeProgname,
-				Name:     os.Args[0],
-				option:   option{Args: []string{}},
-				Children: []*programTree{},
-			}},
-			{"option", []string{"--opt1"}, Normal, &programTree{
-				Type:   argTypeProgname,
-				Name:   os.Args[0],
-				option: option{Args: []string{"--opt1"}},
-				Children: []*programTree{
-					{
-						Type:     argTypeOption,
-						Name:     "opt1",
-						option:   option{Args: []string{}},
-						Children: []*programTree{},
-					},
-				},
-			}},
-			{"terminator", []string{"--", "--opt1"}, Normal, &programTree{
-				Type:   argTypeProgname,
-				Name:   os.Args[0],
-				option: option{Args: []string{"--", "--opt1"}},
-				Children: []*programTree{
-					{
-						Type:     argTypeText,
-						Name:     "--opt1",
-						option:   option{Args: []string{}},
-						Children: []*programTree{},
-					},
-				},
-			}},
-			{"command", []string{"--opt1", "cmd1", "--cmd1opt1"}, Normal, &programTree{
-				Type:   argTypeProgname,
-				Name:   os.Args[0],
-				option: option{Args: []string{"--opt1", "cmd1", "--cmd1opt1"}},
-				Children: []*programTree{
-					{
-						Type:     argTypeOption,
-						Name:     "opt1",
-						option:   option{Args: []string{}},
-						Children: []*programTree{},
-					},
-					{
-						Type:   argTypeCommand,
-						Name:   "cmd1",
-						option: option{Args: []string{}},
-						Children: []*programTree{
-							{
-								Type:     argTypeOption,
-								Name:     "cmd1opt1",
-								option:   option{Args: []string{}},
-								Children: []*programTree{},
-							},
-						},
-					},
-				},
-			}},
-			{"subcommand", []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"}, Normal, &programTree{
-				Type:   argTypeProgname,
-				Name:   os.Args[0],
-				option: option{Args: []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"}},
-				Children: []*programTree{
-					{
-						Type:     argTypeOption,
-						Name:     "opt1",
-						option:   option{Args: []string{}},
-						Children: []*programTree{},
-					},
-					{
-						Type:   argTypeCommand,
-						Name:   "cmd1",
-						option: option{Args: []string{}},
-						Children: []*programTree{
-							{
-								Type:     argTypeOption,
-								Name:     "cmd1opt1",
-								option:   option{Args: []string{}},
-								Children: []*programTree{},
-							},
-							{
-								Type:   argTypeCommand,
-								Name:   "sub1cmd1",
-								option: option{Args: []string{}},
-								Children: []*programTree{
-									{
-										Type:     argTypeOption,
-										Name:     "sub1cmd1opt1",
-										option:   option{Args: []string{}},
-										Children: []*programTree{},
-									},
-								},
-							},
-						},
-					},
-				},
-			}},
-			{"arg", []string{"hello", "world"}, Normal, &programTree{
-				Type:   argTypeProgname,
-				Name:   os.Args[0],
-				option: option{Args: []string{"hello", "world"}},
-				Children: []*programTree{
-					{
-						Type:     argTypeText,
-						Name:     "hello",
-						option:   option{Args: []string{}},
-						Children: []*programTree{},
-					},
-					{
-						Type:     argTypeText,
-						Name:     "world",
-						option:   option{Args: []string{}},
-						Children: []*programTree{},
-					},
-				},
-			}},
+			{"empty", nil, Normal, tree},
+			{"empty", []string{}, Normal, tree},
+			{"text", []string{"txt"}, Normal, func() *programTree {
+				tree := setupOpt().programTree
+				tree.Children = append(tree.Children, newCLIArg(argTypeText, "txt"))
+				return tree
+			}()},
+			// {"text to command", []string{"cmd1", "txt"}, Normal, func() *programTree {
+			// 	tree := setupOpt().programTree
+			// 	n, err := getNode(tree, "cmd1")
+			// 	if err != nil {
+			// 		panic(err)
+			// 	}
+			// 	n.Children = append(n.Children, newCLIArg(argTypeText, "txt"))
+			// 	return n
+			// }()},
+			// {"option", []string{"--rootopt1"}, Normal, func() *programTree {
+			// 	n, _ := getNode(tree)
+			// 	// n.option.Args = []string{"--rootopt1"}
+			// 	return n
+			// }()},
+			// {"terminator", []string{"--", "--opt1"}, Normal, &programTree{
+			// 	Type:   argTypeProgname,
+			// 	Name:   os.Args[0],
+			// 	option: option{Args: []string{"--", "--opt1"}},
+			// 	Children: []*programTree{
+			// 		{
+			// 			Type:     argTypeText,
+			// 			Name:     "--opt1",
+			// 			option:   option{Args: []string{}},
+			// 			Children: []*programTree{},
+			// 		},
+			// 	},
+			// }},
+			// {"command", []string{"--opt1", "cmd1", "--cmd1opt1"}, Normal, &programTree{
+			// 	Type:   argTypeProgname,
+			// 	Name:   os.Args[0],
+			// 	option: option{Args: []string{"--opt1", "cmd1", "--cmd1opt1"}},
+			// 	Children: []*programTree{
+			// 		{
+			// 			Type:     argTypeOption,
+			// 			Name:     "opt1",
+			// 			option:   option{Args: []string{}},
+			// 			Children: []*programTree{},
+			// 		},
+			// 		{
+			// 			Type:   argTypeCommand,
+			// 			Name:   "cmd1",
+			// 			option: option{Args: []string{}},
+			// 			Children: []*programTree{
+			// 				{
+			// 					Type:     argTypeOption,
+			// 					Name:     "cmd1opt1",
+			// 					option:   option{Args: []string{}},
+			// 					Children: []*programTree{},
+			// 				},
+			// 			},
+			// 		},
+			// 	},
+			// }},
+			// {"subcommand", []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"}, Normal, &programTree{
+			// 	Type:   argTypeProgname,
+			// 	Name:   os.Args[0],
+			// 	option: option{Args: []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"}},
+			// 	Children: []*programTree{
+			// 		{
+			// 			Type:     argTypeOption,
+			// 			Name:     "opt1",
+			// 			option:   option{Args: []string{}},
+			// 			Children: []*programTree{},
+			// 		},
+			// 		{
+			// 			Type:   argTypeCommand,
+			// 			Name:   "cmd1",
+			// 			option: option{Args: []string{}},
+			// 			Children: []*programTree{
+			// 				{
+			// 					Type:     argTypeOption,
+			// 					Name:     "cmd1opt1",
+			// 					option:   option{Args: []string{}},
+			// 					Children: []*programTree{},
+			// 				},
+			// 				{
+			// 					Type:   argTypeCommand,
+			// 					Name:   "sub1cmd1",
+			// 					option: option{Args: []string{}},
+			// 					Children: []*programTree{
+			// 						{
+			// 							Type:     argTypeOption,
+			// 							Name:     "sub1cmd1opt1",
+			// 							option:   option{Args: []string{}},
+			// 							Children: []*programTree{},
+			// 						},
+			// 					},
+			// 				},
+			// 			},
+			// 		},
+			// 	},
+			// }},
+			// {"arg", []string{"hello", "world"}, Normal, &programTree{
+			// 	Type:   argTypeProgname,
+			// 	Name:   os.Args[0],
+			// 	option: option{Args: []string{"hello", "world"}},
+			// 	Children: []*programTree{
+			// 		{
+			// 			Type:     argTypeText,
+			// 			Name:     "hello",
+			// 			option:   option{Args: []string{}},
+			// 			Children: []*programTree{},
+			// 		},
+			// 		{
+			// 			Type:     argTypeText,
+			// 			Name:     "world",
+			// 			option:   option{Args: []string{}},
+			// 			Children: []*programTree{},
+			// 		},
+			// 	},
+			// }},
 		}
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				argTree := parseCLIArgs(tree, test.args, test.mode)
 				if !reflect.DeepEqual(test.expected, argTree) {
 					t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(test.expected), spew.Sdump(argTree))
+					// t.Errorf("expected tree: \n%s\n got: \n%s\n", test.expected, argTree)
 				}
 			})
 		}
