@@ -125,104 +125,104 @@ func TestTrees(t *testing.T) {
 			name     string
 			args     []string
 			mode     Mode
-			expected *CLIArg
+			expected *ProgramTree
 		}{
-			{"empty", nil, Normal, &CLIArg{
+			{"empty", nil, Normal, &ProgramTree{
 				Type:     argTypeProgname,
 				Name:     os.Args[0],
-				Args:     []string{},
-				Children: []*CLIArg{},
+				Option:   Option{Args: []string{}},
+				Children: []*ProgramTree{},
 			}},
-			{"empty", []string{}, Normal, &CLIArg{
+			{"empty", []string{}, Normal, &ProgramTree{
 				Type:     argTypeProgname,
 				Name:     os.Args[0],
-				Args:     []string{},
-				Children: []*CLIArg{},
+				Option:   Option{Args: []string{}},
+				Children: []*ProgramTree{},
 			}},
-			{"option", []string{"--opt1"}, Normal, &CLIArg{
-				Type: argTypeProgname,
-				Name: os.Args[0],
-				Args: []string{"--opt1"},
-				Children: []*CLIArg{
+			{"option", []string{"--opt1"}, Normal, &ProgramTree{
+				Type:   argTypeProgname,
+				Name:   os.Args[0],
+				Option: Option{Args: []string{"--opt1"}},
+				Children: []*ProgramTree{
 					{
 						Type:     argTypeOption,
 						Name:     "opt1",
-						Args:     []string{},
-						Children: []*CLIArg{},
+						Option:   Option{Args: []string{}},
+						Children: []*ProgramTree{},
 					},
 				},
 			}},
-			{"terminator", []string{"--", "--opt1"}, Normal, &CLIArg{
-				Type: argTypeProgname,
-				Name: os.Args[0],
-				Args: []string{"--", "--opt1"},
-				Children: []*CLIArg{
+			{"terminator", []string{"--", "--opt1"}, Normal, &ProgramTree{
+				Type:   argTypeProgname,
+				Name:   os.Args[0],
+				Option: Option{Args: []string{"--", "--opt1"}},
+				Children: []*ProgramTree{
 					{
 						Type:     argTypeText,
 						Name:     "--opt1",
-						Args:     []string{},
-						Children: []*CLIArg{},
+						Option:   Option{Args: []string{}},
+						Children: []*ProgramTree{},
 					},
 				},
 			}},
-			{"command", []string{"--opt1", "cmd1", "--cmd1opt1"}, Normal, &CLIArg{
-				Type: argTypeProgname,
-				Name: os.Args[0],
-				Args: []string{"--opt1", "cmd1", "--cmd1opt1"},
-				Children: []*CLIArg{
+			{"command", []string{"--opt1", "cmd1", "--cmd1opt1"}, Normal, &ProgramTree{
+				Type:   argTypeProgname,
+				Name:   os.Args[0],
+				Option: Option{Args: []string{"--opt1", "cmd1", "--cmd1opt1"}},
+				Children: []*ProgramTree{
 					{
 						Type:     argTypeOption,
 						Name:     "opt1",
-						Args:     []string{},
-						Children: []*CLIArg{},
+						Option:   Option{Args: []string{}},
+						Children: []*ProgramTree{},
 					},
 					{
-						Type: argTypeCommand,
-						Name: "cmd1",
-						Args: []string{},
-						Children: []*CLIArg{
+						Type:   argTypeCommand,
+						Name:   "cmd1",
+						Option: Option{Args: []string{}},
+						Children: []*ProgramTree{
 							{
 								Type:     argTypeOption,
 								Name:     "cmd1opt1",
-								Args:     []string{},
-								Children: []*CLIArg{},
+								Option:   Option{Args: []string{}},
+								Children: []*ProgramTree{},
 							},
 						},
 					},
 				},
 			}},
-			{"subcommand", []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"}, Normal, &CLIArg{
-				Type: argTypeProgname,
-				Name: os.Args[0],
-				Args: []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"},
-				Children: []*CLIArg{
+			{"subcommand", []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"}, Normal, &ProgramTree{
+				Type:   argTypeProgname,
+				Name:   os.Args[0],
+				Option: Option{Args: []string{"--opt1", "cmd1", "--cmd1opt1", "sub1cmd1", "--sub1cmd1opt1"}},
+				Children: []*ProgramTree{
 					{
 						Type:     argTypeOption,
 						Name:     "opt1",
-						Args:     []string{},
-						Children: []*CLIArg{},
+						Option:   Option{Args: []string{}},
+						Children: []*ProgramTree{},
 					},
 					{
-						Type: argTypeCommand,
-						Name: "cmd1",
-						Args: []string{},
-						Children: []*CLIArg{
+						Type:   argTypeCommand,
+						Name:   "cmd1",
+						Option: Option{Args: []string{}},
+						Children: []*ProgramTree{
 							{
 								Type:     argTypeOption,
 								Name:     "cmd1opt1",
-								Args:     []string{},
-								Children: []*CLIArg{},
+								Option:   Option{Args: []string{}},
+								Children: []*ProgramTree{},
 							},
 							{
-								Type: argTypeCommand,
-								Name: "sub1cmd1",
-								Args: []string{},
-								Children: []*CLIArg{
+								Type:   argTypeCommand,
+								Name:   "sub1cmd1",
+								Option: Option{Args: []string{}},
+								Children: []*ProgramTree{
 									{
 										Type:     argTypeOption,
 										Name:     "sub1cmd1opt1",
-										Args:     []string{},
-										Children: []*CLIArg{},
+										Option:   Option{Args: []string{}},
+										Children: []*ProgramTree{},
 									},
 								},
 							},
@@ -230,22 +230,22 @@ func TestTrees(t *testing.T) {
 					},
 				},
 			}},
-			{"arg", []string{"hello", "world"}, Normal, &CLIArg{
-				Type: argTypeProgname,
-				Name: os.Args[0],
-				Args: []string{"hello", "world"},
-				Children: []*CLIArg{
+			{"arg", []string{"hello", "world"}, Normal, &ProgramTree{
+				Type:   argTypeProgname,
+				Name:   os.Args[0],
+				Option: Option{Args: []string{"hello", "world"}},
+				Children: []*ProgramTree{
 					{
 						Type:     argTypeText,
 						Name:     "hello",
-						Args:     []string{},
-						Children: []*CLIArg{},
+						Option:   Option{Args: []string{}},
+						Children: []*ProgramTree{},
 					},
 					{
 						Type:     argTypeText,
 						Name:     "world",
-						Args:     []string{},
-						Children: []*CLIArg{},
+						Option:   Option{Args: []string{}},
+						Children: []*ProgramTree{},
 					},
 				},
 			}},
@@ -268,38 +268,38 @@ func TestIsOption(t *testing.T) {
 		name     string
 		inputArg string
 		mode     Mode
-		expected []*CLIArg
+		expected []*ProgramTree
 		isOption bool
 	}{
-		{"lone dash", "-", Normal, []*CLIArg{NewCLIArg(argTypeOption, "-")}, true},
-		{"lone dash", "-", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "-")}, true},
-		{"lone dash", "-", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "-")}, true},
+		{"lone dash", "-", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "-")}, true},
+		{"lone dash", "-", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "-")}, true},
+		{"lone dash", "-", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "-")}, true},
 
 		// TODO: Lets not return an option here
 		// Lets let the caller identify this.
-		{"double dash", "--", Normal, []*CLIArg{NewCLIArg(argTypeTerminator, "--")}, false},
-		{"double dash", "--", Bundling, []*CLIArg{NewCLIArg(argTypeTerminator, "--")}, false},
-		{"double dash", "--", SingleDash, []*CLIArg{NewCLIArg(argTypeTerminator, "--")}, false},
+		{"double dash", "--", Normal, []*ProgramTree{NewCLIArg(argTypeTerminator, "--")}, false},
+		{"double dash", "--", Bundling, []*ProgramTree{NewCLIArg(argTypeTerminator, "--")}, false},
+		{"double dash", "--", SingleDash, []*ProgramTree{NewCLIArg(argTypeTerminator, "--")}, false},
 
-		{"no option", "opt", Normal, []*CLIArg{}, false},
-		{"no option", "opt", Bundling, []*CLIArg{}, false},
-		{"no option", "opt", SingleDash, []*CLIArg{}, false},
+		{"no option", "opt", Normal, []*ProgramTree{}, false},
+		{"no option", "opt", Bundling, []*ProgramTree{}, false},
+		{"no option", "opt", SingleDash, []*ProgramTree{}, false},
 
-		{"Long option", "--opt", Normal, []*CLIArg{NewCLIArg(argTypeOption, "opt")}, true},
-		{"Long option", "--opt", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "opt")}, true},
-		{"Long option", "--opt", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "opt")}, true},
+		{"Long option", "--opt", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "opt")}, true},
+		{"Long option", "--opt", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "opt")}, true},
+		{"Long option", "--opt", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "opt")}, true},
 
-		{"Long option with arg", "--opt=arg", Normal, []*CLIArg{NewCLIArg(argTypeOption, "opt", "arg")}, true},
-		{"Long option with arg", "--opt=arg", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "opt", "arg")}, true},
-		{"Long option with arg", "--opt=arg", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"Long option with arg", "--opt=arg", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"Long option with arg", "--opt=arg", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"Long option with arg", "--opt=arg", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
 
-		{"short option", "-opt", Normal, []*CLIArg{NewCLIArg(argTypeOption, "opt")}, true},
-		{"short option", "-opt", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t")}, true},
-		{"short option", "-opt", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "o", "pt")}, true},
+		{"short option", "-opt", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "opt")}, true},
+		{"short option", "-opt", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t")}, true},
+		{"short option", "-opt", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "o", "pt")}, true},
 
-		{"short option with arg", "-opt=arg", Normal, []*CLIArg{NewCLIArg(argTypeOption, "opt", "arg")}, true},
-		{"short option with arg", "-opt=arg", Bundling, []*CLIArg{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t", "arg")}, true},
-		{"short option with arg", "-opt=arg", SingleDash, []*CLIArg{NewCLIArg(argTypeOption, "o", "pt=arg")}, true},
+		{"short option with arg", "-opt=arg", Normal, []*ProgramTree{NewCLIArg(argTypeOption, "opt", "arg")}, true},
+		{"short option with arg", "-opt=arg", Bundling, []*ProgramTree{NewCLIArg(argTypeOption, "o"), NewCLIArg(argTypeOption, "p"), NewCLIArg(argTypeOption, "t", "arg")}, true},
+		{"short option with arg", "-opt=arg", SingleDash, []*ProgramTree{NewCLIArg(argTypeOption, "o", "pt=arg")}, true},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {

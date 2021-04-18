@@ -21,19 +21,12 @@ const (
 	argTypeTerminator                // --
 )
 
-type CLIArg struct {
-	Type     argType
-	Name     string
-	Args     []string
-	Children []*CLIArg
-}
-
-func NewCLIArg(t argType, name string, args ...string) *CLIArg {
-	arg := &CLIArg{
+func NewCLIArg(t argType, name string, args ...string) *ProgramTree {
+	arg := &ProgramTree{
 		Type:     t,
 		Name:     name,
-		Args:     []string{},
-		Children: []*CLIArg{},
+		Children: []*ProgramTree{},
+		Option:   Option{Args: []string{}},
 	}
 	if len(args) > 0 {
 		arg.Args = args
@@ -46,12 +39,12 @@ type ProgramTree struct {
 	Name     string
 	Children []*ProgramTree
 	Parent   *ProgramTree
-	OptionFields
-	CommandFields
+	Option
+	Command
 }
 
-// OptionFields - Fields that only make sense for an Option
-type OptionFields struct {
+// Option - Fields that only make sense for an Option
+type Option struct {
 	Aliases  []string
 	Args     []string
 	Called   bool
@@ -59,15 +52,15 @@ type OptionFields struct {
 	Min, Max int // Minimum and Maximun amount of fields to pass to option in one call.
 }
 
-// CommandFields - Fields that only make sense for a Command
-type CommandFields struct {
+// Command - Fields that only make sense for a Command
+type Command struct {
 	CommandFn CommandFn
 }
 
 // CommandFn - Function signature for commands
 type CommandFn func(context.Context, *GetOpt, []string) error
 
-func parseCLIArgs(tree *ProgramTree, args []string, mode Mode) *CLIArg {
+func parseCLIArgs(tree *ProgramTree, args []string, mode Mode) *ProgramTree {
 	// Design: This function could return an array or CLIargs as a parse result
 	// or I could do one level up and have a root CLIarg type with the name of
 	// the program.  Having the root level might be helpful with help generation.
@@ -213,12 +206,12 @@ At this level we don't agregate results in case we have -- and then other option
 This makes the caller have to agregate multiple calls to the same option.
 TODO: Here is where we should handle windows /option types.
 */
-func isOption(s string, mode Mode) ([]*CLIArg, bool) {
+func isOption(s string, mode Mode) ([]*ProgramTree, bool) {
 	// Handle especial cases
 	if s == "--" {
-		return []*CLIArg{NewCLIArg(argTypeTerminator, "--")}, false
+		return []*ProgramTree{NewCLIArg(argTypeTerminator, "--")}, false
 	} else if s == "-" {
-		return []*CLIArg{NewCLIArg(argTypeOption, "-")}, true
+		return []*ProgramTree{NewCLIArg(argTypeOption, "-")}, true
 	}
 
 	match := isOptionRegex.FindStringSubmatch(s)
@@ -231,12 +224,12 @@ func isOption(s string, mode Mode) ([]*CLIArg, bool) {
 				// TODO: Here is where we could split on comma
 				opt.Args = []string{args}
 			}
-			return []*CLIArg{opt}, true
+			return []*ProgramTree{opt}, true
 		}
 		// check short option
 		switch mode {
 		case Bundling:
-			opts := []*CLIArg{}
+			opts := []*ProgramTree{}
 			for _, option := range strings.Split(match[2], "") {
 				opt := NewCLIArg(argTypeOption, option)
 				opts = append(opts, opt)
@@ -249,7 +242,7 @@ func isOption(s string, mode Mode) ([]*CLIArg, bool) {
 			}
 			return opts, true
 		case SingleDash:
-			opts := []*CLIArg{}
+			opts := []*ProgramTree{}
 			for _, option := range []string{strings.Split(match[2], "")[0]} {
 				opt := NewCLIArg(argTypeOption, option)
 				opts = append(opts, opt)
@@ -265,8 +258,8 @@ func isOption(s string, mode Mode) ([]*CLIArg, bool) {
 			if args != "" {
 				opt.Args = []string{args}
 			}
-			return []*CLIArg{opt}, true
+			return []*ProgramTree{opt}, true
 		}
 	}
-	return []*CLIArg{}, false
+	return []*ProgramTree{}, false
 }
