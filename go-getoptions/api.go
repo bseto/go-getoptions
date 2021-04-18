@@ -19,7 +19,7 @@ func NewCLIArg(t argType, name string, args ...string) *programTree {
 		Type:     t,
 		Name:     name,
 		Children: []*programTree{},
-		Option:   Option{Args: []string{}},
+		option:   option{Args: []string{}},
 	}
 	if len(args) > 0 {
 		arg.Args = args
@@ -32,12 +32,12 @@ type programTree struct {
 	Name     string
 	Children []*programTree
 	Parent   *programTree
-	Option
-	Command
+	option
+	command
 }
 
-// Option - Fields that only make sense for an Option
-type Option struct {
+// option - Fields that only make sense for an option
+type option struct {
 	Aliases  []string
 	Args     []string
 	Called   bool
@@ -45,8 +45,8 @@ type Option struct {
 	Min, Max int // Minimum and Maximun amount of fields to pass to option in one call.
 }
 
-// Command - Fields that only make sense for a Command
-type Command struct {
+// command - Fields that only make sense for a command
+type command struct {
 	CommandFn CommandFn
 }
 
