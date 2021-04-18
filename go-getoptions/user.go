@@ -64,6 +64,7 @@ func (gopt *GetOpt) String(name, def string, fns ...ModifyFn) *string {
 		Name:     name,
 		Children: []*programTree{},
 		Parent:   gopt.programTree,
+		// Level:    gopt.programTree.Level + 1,
 	})
 	return nil
 }

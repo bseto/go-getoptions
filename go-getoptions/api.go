@@ -1,9 +1,7 @@
 package getoptions
 
 import (
-	"fmt"
 	"os"
-	"strings"
 )
 
 type programTree struct {
@@ -16,19 +14,19 @@ type programTree struct {
 	command
 }
 
-func (t *programTree) String() string {
-	out := strings.Repeat("  ", t.Level) + fmt.Sprintf("Name: %v, Type: %v", t.Name, t.Type)
-	if len(t.Children) > 0 {
-		out += ", children: [\n"
-		for _, child := range t.Children {
-			out += child.String()
-		}
-		out += strings.Repeat("  ", t.Level) + "]\n"
-	} else {
-		out += ", children: []\n"
-	}
-	return out
-}
+// func (t *programTree) String() string {
+// 	out := strings.Repeat("  ", t.Level) + fmt.Sprintf("Name: %v, Type: %v", t.Name, t.Type)
+// 	if len(t.Children) > 0 {
+// 		out += ", children: [\n"
+// 		for _, child := range t.Children {
+// 			out += child.String()
+// 		}
+// 		out += strings.Repeat("  ", t.Level) + "]\n"
+// 	} else {
+// 		out += ", children: []\n"
+// 	}
+// 	return out
+// }
 
 func getNode(tree *programTree, element ...string) (*programTree, error) {
 	if len(element) == 0 {
@@ -121,8 +119,7 @@ ARGS_LOOP:
 
 		// TODO: Handle case where option has an argument
 		// check for option
-		cliArg, is := isOption(arg, mode)
-		if is {
+		if cliArg, is := isOption(arg, mode); is {
 			currentCLINode.Children = append(currentCLINode.Children, cliArg...)
 			continue
 		}

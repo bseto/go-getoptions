@@ -168,7 +168,6 @@ func TestTrees(t *testing.T) {
 	})
 
 	t.Run("CLIArg", func(t *testing.T) {
-		tree := setupOpt().programTree
 
 		tests := []struct {
 			name     string
@@ -176,22 +175,38 @@ func TestTrees(t *testing.T) {
 			mode     Mode
 			expected *programTree
 		}{
-			{"empty", nil, Normal, tree},
-			{"empty", []string{}, Normal, tree},
+			{"empty", nil, Normal, setupOpt().programTree},
+			{"empty", []string{}, Normal, setupOpt().programTree},
 			{"text", []string{"txt"}, Normal, func() *programTree {
 				tree := setupOpt().programTree
 				tree.Children = append(tree.Children, newCLIArg(argTypeText, "txt"))
 				return tree
 			}()},
-			// {"text to command", []string{"cmd1", "txt"}, Normal, func() *programTree {
-			// 	tree := setupOpt().programTree
-			// 	n, err := getNode(tree, "cmd1")
-			// 	if err != nil {
-			// 		panic(err)
-			// 	}
-			// 	n.Children = append(n.Children, newCLIArg(argTypeText, "txt"))
-			// 	return n
-			// }()},
+			{"command", []string{"cmd1"}, Normal, func() *programTree {
+				n, err := getNode(setupOpt().programTree, "cmd1")
+				if err != nil {
+					panic(err)
+				}
+				return n
+			}()},
+			{"text to command", []string{"cmd1", "txt"}, Normal, func() *programTree {
+				tree := setupOpt().programTree
+				n, err := getNode(tree, "cmd1")
+				if err != nil {
+					panic(err)
+				}
+				n.Children = append(n.Children, newCLIArg(argTypeText, "txt"))
+				return n
+			}()},
+			{"text to sub command", []string{"cmd1", "sub1cmd1", "txt"}, Normal, func() *programTree {
+				tree := setupOpt().programTree
+				n, err := getNode(tree, "cmd1", "sub1cmd1")
+				if err != nil {
+					panic(err)
+				}
+				n.Children = append(n.Children, newCLIArg(argTypeText, "txt"))
+				return n
+			}()},
 			// {"option", []string{"--rootopt1"}, Normal, func() *programTree {
 			// 	n, _ := getNode(tree)
 			// 	// n.option.Args = []string{"--rootopt1"}
@@ -297,6 +312,7 @@ func TestTrees(t *testing.T) {
 		}
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
+				tree := setupOpt().programTree
 				argTree := parseCLIArgs(tree, test.args, test.mode)
 				if !reflect.DeepEqual(test.expected, argTree) {
 					t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(test.expected), spew.Sdump(argTree))
