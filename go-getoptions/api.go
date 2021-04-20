@@ -1,5 +1,7 @@
 package getoptions
 
+import "github.com/DavidGamba/go-getoptions/sliceiterator"
+
 type programTree struct {
 	Type     argType
 	Name     string
@@ -94,16 +96,15 @@ func parseCLIArgs(tree *programTree, args []string, mode Mode) *programTree {
 
 	currentProgramNode := tree
 
+	iterator := sliceiterator.New(&args)
+
 ARGS_LOOP:
-	for i, arg := range args {
+	for iterator.Next() {
 
 		// handle terminator
-		if arg == "--" {
-			if len(args) > i+1 {
-				for _, arg := range args[i+1:] {
-					// TODO: I am not checking the option against the tree here.
-					currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, arg))
-				}
+		if iterator.Value() == "--" {
+			for iterator.Next() {
+				currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, iterator.Value()))
 			}
 			break
 		}
@@ -112,7 +113,7 @@ ARGS_LOOP:
 
 		// TODO: Handle case where option has an argument
 		// check for option
-		if cliArg, is := isOption(arg, mode); is {
+		if cliArg, is := isOption(iterator.Value(), mode); is {
 			currentProgramNode.Children = append(currentProgramNode.Children, cliArg...)
 			continue
 		}
@@ -120,14 +121,14 @@ ARGS_LOOP:
 		// handle commands and subcommands
 		for _, child := range currentProgramNode.Children {
 			// Only check commands
-			if child.Type == argTypeCommand && child.Name == arg {
+			if child.Type == argTypeCommand && child.Name == iterator.Value() {
 				currentProgramNode = child
 				continue ARGS_LOOP
 			}
 		}
 
 		// handle text
-		currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, arg))
+		currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, iterator.Value()))
 	}
 	return currentProgramNode
 }
