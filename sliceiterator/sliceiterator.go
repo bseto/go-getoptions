@@ -59,6 +59,11 @@ func (a *Iterator) PeekNextValue() (string, bool) {
 	return (*a.data)[a.idx+1], true
 }
 
+// IsLast - Tells if the current element is the last.
+func (a *Iterator) IsLast() bool {
+	return a.idx == len(*a.data)-1
+}
+
 // Remaining - Get all remaining values index inclusive.
 func (a *Iterator) Remaining() []string {
 	if a.idx >= len(*a.data) {

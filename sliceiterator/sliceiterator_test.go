@@ -47,6 +47,12 @@ func TestIterator(t *testing.T) {
 			if !reflect.DeepEqual(i.Remaining(), []string{"c", "d"}) {
 				t.Errorf("wrong remaining value: %v\n", i.Remaining())
 			}
+			if i.IsLast() {
+				t.Errorf("not last\n")
+			}
+		}
+		if i.Index() == 3 && !i.IsLast() {
+			t.Errorf("last not marked properly\n")
 		}
 	}
 	if i.ExistsNext() {
