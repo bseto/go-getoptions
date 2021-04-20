@@ -313,7 +313,7 @@ func TestTrees(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				tree := setupOpt().programTree
-				argTree := parseCLIArgs(tree, test.args, test.mode)
+				argTree := parseCLIArgs(false, tree, test.args, test.mode)
 				if !reflect.DeepEqual(test.expected, argTree) {
 					t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(test.expected), spew.Sdump(argTree))
 					// t.Errorf("expected tree: \n%s\n got: \n%s\n", test.expected, argTree)

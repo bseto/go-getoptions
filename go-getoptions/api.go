@@ -1,6 +1,10 @@
 package getoptions
 
-import "github.com/DavidGamba/go-getoptions/sliceiterator"
+import (
+	"strings"
+
+	"github.com/DavidGamba/go-getoptions/sliceiterator"
+)
 
 type programTree struct {
 	Type     argType
@@ -76,7 +80,7 @@ func newCLIArg(t argType, name string, args ...string) *programTree {
 	return arg
 }
 
-func parseCLIArgs(tree *programTree, args []string, mode Mode) *programTree {
+func parseCLIArgs(completionMode bool, tree *programTree, args []string, mode Mode) *programTree {
 	// Design: This function could return an array or CLIargs as a parse result
 	// or I could do one level up and have a root CLIarg type with the name of
 	// the program.  Having the root level might be helpful with help generation.
@@ -101,6 +105,22 @@ func parseCLIArgs(tree *programTree, args []string, mode Mode) *programTree {
 ARGS_LOOP:
 	for iterator.Next() {
 
+		if completionMode && iterator.IsLast() {
+			// TODO: check what was the behaviour when you have a space and hit the tab completion.
+
+			// TODO: Handle completions
+			// We check to see if this is the last arg and act on that one.
+			if iterator.Value() == "-" || iterator.Value() == "--" {
+				// Provide option completions
+			}
+			if strings.HasPrefix(iterator.Value(), "-") {
+				// Provide option completions
+			}
+			// Iterate over commands and check prefix to see if we offer command completion
+
+			// Provide other kinds of completions, like file completions.
+		}
+
 		// handle terminator
 		if iterator.Value() == "--" {
 			for iterator.Next() {
@@ -114,9 +134,16 @@ ARGS_LOOP:
 		// TODO: Handle case where option has an argument
 		// check for option
 		if cliArg, is := isOption(iterator.Value(), mode); is {
+			// TODO: This shouldn't append new children but update existing ones and isOption needs to be able to check if the option expects a follow up argument.
+			// Check min, check max and keep ingesting until something starts with `-` or matches a command.
 			currentProgramNode.Children = append(currentProgramNode.Children, cliArg...)
 			continue
 		}
+
+		// When handling options out of order, iterate over all possible options for all the children and set them if they match.
+		// That means that the option has to match the alias and aliases need to be non ambiguous with the parent.
+		// partial options can only be applied if they match a single possible option in the tree.
+		// Since at the end we return the programTree node, we will only care about handling the options at one single level.
 
 		// handle commands and subcommands
 		for _, child := range currentProgramNode.Children {
