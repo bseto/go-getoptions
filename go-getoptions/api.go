@@ -105,6 +105,7 @@ func parseCLIArgs(completionMode bool, tree *programTree, args []string, mode Mo
 ARGS_LOOP:
 	for iterator.Next() {
 
+		// We only generate completions when we reached the end of the provided args
 		if completionMode && iterator.IsLast() {
 			// TODO: check what was the behaviour when you have a space and hit the tab completion.
 
