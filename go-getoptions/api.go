@@ -1,6 +1,7 @@
 package getoptions
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/DavidGamba/go-getoptions/sliceiterator"
@@ -16,19 +17,26 @@ type programTree struct {
 	command
 }
 
-// func (t *programTree) String() string {
-// 	out := strings.Repeat("  ", t.Level) + fmt.Sprintf("Name: %v, Type: %v", t.Name, t.Type)
-// 	if len(t.Children) > 0 {
-// 		out += ", children: [\n"
-// 		for _, child := range t.Children {
-// 			out += child.String()
-// 		}
-// 		out += strings.Repeat("  ", t.Level) + "]\n"
-// 	} else {
-// 		out += ", children: []\n"
-// 	}
-// 	return out
-// }
+// Str - not string so it doesn't get called automatically by Spew.
+func (t *programTree) Str() string {
+	level := t.Level
+	if t.Type == argTypeOption {
+		if t.Parent != nil {
+			level = t.Parent.Level + 1
+		}
+	}
+	out := strings.Repeat("  ", level) + fmt.Sprintf("Name: %v, Type: %v", t.Name, t.Type)
+	if len(t.Children) > 0 {
+		out += ", children: [\n"
+		for _, child := range t.Children {
+			out += child.Str()
+		}
+		out += strings.Repeat("  ", level) + "]\n"
+	} else {
+		out += ", children: []\n"
+	}
+	return out
+}
 
 func getNode(tree *programTree, element ...string) (*programTree, error) {
 	if len(element) == 0 {
@@ -60,6 +68,8 @@ type option struct {
 	Called   bool
 	CalledAs string
 	Min, Max int // Minimum and Maximun amount of fields to pass to option in one call.
+	// TODO: Add pointer to underlying data
+	// The rest of the option will be copied but the pointer to the data needs to stay.
 }
 
 // command - Fields that only make sense for a command
@@ -80,7 +90,11 @@ func newCLIArg(t argType, name string, args ...string) *programTree {
 	return arg
 }
 
-func parseCLIArgs(completionMode bool, tree *programTree, args []string, mode Mode) *programTree {
+type completions *[]string
+
+// parseCLIArgs - Given the root node tree and the cli args it returns a populated tree of the node that was called.<Plug>(completion_confirm_completion)
+// For example, if a command is called, then the returned node is that of the command with the options that were set updated with their values.
+func parseCLIArgs(completionMode bool, tree *programTree, args []string, mode Mode) (*programTree, completions, error) {
 	// Design: This function could return an array or CLIargs as a parse result
 	// or I could do one level up and have a root CLIarg type with the name of
 	// the program.  Having the root level might be helpful with help generation.
@@ -158,7 +172,7 @@ ARGS_LOOP:
 		// handle text
 		currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, iterator.Value()))
 	}
-	return currentProgramNode
+	return currentProgramNode, &[]string{}, nil
 }
 
 // TODO:
