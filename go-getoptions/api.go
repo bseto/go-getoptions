@@ -104,6 +104,7 @@ type command struct {
 	CommandFn CommandFn
 }
 
+// TODO: Make this a method of tree so we can add parent information
 func newCLIArg(t argType, name string, args ...string) *programTree {
 	arg := &programTree{
 		Type:     t,
@@ -119,8 +120,9 @@ func newCLIArg(t argType, name string, args ...string) *programTree {
 
 type completions *[]string
 
-// parseCLIArgs - Given the root node tree and the cli args it returns a populated tree of the node that was called.<Plug>(completion_confirm_completion)
+// parseCLIArgs - Given the root node tree and the cli args it returns a populated tree of the node that was called.
 // For example, if a command is called, then the returned node is that of the command with the options that were set updated with their values.
+// Additionally, when in completion mode, it returns the possible completions
 func parseCLIArgs(completionMode bool, tree *programTree, args []string, mode Mode) (*programTree, completions, error) {
 	// Design: This function could return an array or CLIargs as a parse result
 	// or I could do one level up and have a root CLIarg type with the name of
@@ -175,6 +177,16 @@ ARGS_LOOP:
 
 		// TODO: Handle case where option has an argument
 		// check for option
+
+		// isOption should check if a cli argument starts with -.
+		// If it does, we validate that it matches an option.
+		// If it does we update the option with the values that might have been provided on the CLI.
+		//
+		// We almost need to build a separate option tree which allows unknown options and then update the main tree when we are done parsing cli args.
+		//
+		// Currently go-getoptions has no knowledge of command options at the
+		// parents so it marks them as an unkonw option that needs to be used at a
+		// different level. It is as if it was ignoring getoptions.Pass.
 		if cliArg, is := isOption(iterator.Value(), mode); is {
 			// TODO: This shouldn't append new children but update existing ones and isOption needs to be able to check if the option expects a follow up argument.
 			// Check min, check max and keep ingesting until something starts with `-` or matches a command.
@@ -201,6 +213,9 @@ ARGS_LOOP:
 	}
 
 	// TODO: Before returning the current node, parse EnvVars and update the values.
+
+	// TODO: After being done parsing everything validate for errors
+	// Errors can be unknown options, options without values, etc
 
 	return currentProgramNode, &[]string{}, nil
 }

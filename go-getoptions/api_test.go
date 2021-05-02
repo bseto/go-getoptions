@@ -3,8 +3,6 @@ package getoptions
 import (
 	"reflect"
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 func TestAPI(t *testing.T) {
@@ -158,8 +156,8 @@ func TestAPI(t *testing.T) {
 					t.Errorf("unexpected error")
 				}
 				if !reflect.DeepEqual(test.expected, argTree) {
-					t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(test.expected), spew.Sdump(argTree))
-					t.Errorf("expected tree: \n%s\n got: \n%s\n", test.expected.Str(), argTree.Str())
+					t.Errorf("expected tree: %s, got: %s\n", SpewToFile(t, test.expected, "expected"), SpewToFile(t, argTree, "got"))
+					t.Fatalf("expected tree: \n%s\n got: \n%s\n", test.expected.Str(), argTree.Str())
 				}
 			})
 		}
