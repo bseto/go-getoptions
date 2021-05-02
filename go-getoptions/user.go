@@ -41,7 +41,7 @@ func New() *GetOpt {
 
 func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 	cmd := &GetOpt{}
-	tree := &programTree{
+	command := &programTree{
 		Type:     argTypeCommand,
 		Name:     name,
 		Children: []*programTree{},
@@ -49,12 +49,17 @@ func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 		Level:    gopt.programTree.Level + 1,
 	}
 	for _, child := range gopt.programTree.Children {
+		// The option parent doesn't match properly here.
+		// I should in a way create a copy of the option but I still want a pointer to the data.
+
 		if child.Type == argTypeOption {
-			tree.Children = append(tree.Children, child)
+			c := child.Copy() // copy that maintains a pointer to the underlying data
+			c.SetParent(command)
+			command.Children = append(command.Children, c)
 		}
 	}
-	cmd.programTree = tree
-	gopt.programTree.Children = append(gopt.programTree.Children, tree)
+	cmd.programTree = command
+	gopt.programTree.Children = append(gopt.programTree.Children, command)
 	return cmd
 }
 

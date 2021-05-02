@@ -45,14 +45,14 @@ func ParseArgs(args []string, mode Mode) ArgTree {
 		// TODO: isOption should return an option pair, something like option and arg pairs.
 		// The reason for it to be allowed to return multiple options is when we have bundling.
 		// That would unlock budnling with values for example: -w1024h768
-		options, argument, is := isOption(arg, mode)
-		Debug.Printf("options: %v, argument: %s, is: %v\n", options, argument, is)
+		optPair, is := isOptionV2(arg, mode)
+		Debug.Printf("options: %v, argument: %s, is: %v\n", optPair, arg, is)
 		if is {
-			a.Value = options[0]
-			a.IsOption = is
-			if argument != "" {
-				a.Children = append(a.Children, &Arg{Value: argument, IsOption: false, Parent: a})
-			}
+			// a.Value = options[0]
+			// a.IsOption = is
+			// if argument != "" {
+			// 	a.Children = append(a.Children, &Arg{Value: argument, IsOption: false, Parent: a})
+			// }
 		} else {
 			a.Value = arg
 		}

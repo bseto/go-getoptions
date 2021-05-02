@@ -33,8 +33,7 @@ func TestAPI(t *testing.T) {
 				return n
 			}()},
 			{"text to command", []string{"cmd1", "txt"}, Normal, func() *programTree {
-				tree := setupOpt().programTree
-				n, err := getNode(tree, "cmd1")
+				n, err := getNode(setupOpt().programTree, "cmd1")
 				if err != nil {
 					panic(err)
 				}
@@ -42,19 +41,17 @@ func TestAPI(t *testing.T) {
 				return n
 			}()},
 			{"text to sub command", []string{"cmd1", "sub1cmd1", "txt"}, Normal, func() *programTree {
-				tree := setupOpt().programTree
-				n, err := getNode(tree, "cmd1", "sub1cmd1")
+				n, err := getNode(setupOpt().programTree, "cmd1", "sub1cmd1")
 				if err != nil {
 					panic(err)
 				}
 				n.Children = append(n.Children, newCLIArg(argTypeText, "txt"))
 				return n
 			}()},
-			// {"option", []string{"--rootopt1"}, Normal, func() *programTree {
-			// 	n, _ := getNode(tree)
-			// 	// n.option.Args = []string{"--rootopt1"}
-			// 	return n
-			// }()},
+			{"option", []string{"--rootopt1"}, Normal, func() *programTree {
+				tree := setupOpt().programTree
+				return tree
+			}()},
 			// {"terminator", []string{"--", "--opt1"}, Normal, &programTree{
 			// 	Type:   argTypeProgname,
 			// 	Name:   os.Args[0],
@@ -156,10 +153,13 @@ func TestAPI(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				tree := setupOpt().programTree
-				argTree := parseCLIArgs(false, tree, test.args, test.mode)
+				argTree, _, err := parseCLIArgs(false, tree, test.args, test.mode)
+				if err != nil {
+					t.Errorf("unexpected error")
+				}
 				if !reflect.DeepEqual(test.expected, argTree) {
 					t.Errorf("expected tree: %s\n got: %s\n", spew.Sdump(test.expected), spew.Sdump(argTree))
-					// t.Errorf("expected tree: \n%s\n got: \n%s\n", test.expected, argTree)
+					t.Errorf("expected tree: \n%s\n got: \n%s\n", test.expected.Str(), argTree.Str())
 				}
 			})
 		}

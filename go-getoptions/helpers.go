@@ -32,7 +32,7 @@ func isOption(s string, mode Mode) ([]*programTree, bool) {
 			args := strings.TrimPrefix(match[3], "=")
 			if args != "" {
 				// TODO: Here is where we could split on comma
-				opt.Args = []string{args}
+				opt.Option.Args = []string{args}
 			}
 			return []*programTree{opt}, true
 		}
@@ -47,7 +47,7 @@ func isOption(s string, mode Mode) ([]*programTree, bool) {
 			if len(opts) > 0 {
 				args := strings.TrimPrefix(match[3], "=")
 				if args != "" {
-					opts[len(opts)-1].Args = []string{args}
+					opts[len(opts)-1].Option.Args = []string{args}
 				}
 			}
 			return opts, true
@@ -59,14 +59,14 @@ func isOption(s string, mode Mode) ([]*programTree, bool) {
 			}
 			if len(opts) > 0 {
 				args := strings.Join(strings.Split(match[2], "")[1:], "") + match[3]
-				opts[len(opts)-1].Args = []string{args}
+				opts[len(opts)-1].Option.Args = []string{args}
 			}
 			return opts, true
 		default:
 			opt := newCLIArg(argTypeOption, match[2])
 			args := strings.TrimPrefix(match[3], "=")
 			if args != "" {
-				opt.Args = []string{args}
+				opt.Option.Args = []string{args}
 			}
 			return []*programTree{opt}, true
 		}

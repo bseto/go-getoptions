@@ -68,6 +68,8 @@ func TestIsOptionV2(t *testing.T) {
 		{"lone dash", "-", Bundling, []optionPair{{Option: "-"}}, true},
 		{"lone dash", "-", SingleDash, []optionPair{{Option: "-"}}, true},
 
+		// TODO: Lets not return an option here
+		// Lets let the caller identify this.
 		{"double dash", "--", Normal, []optionPair{{Option: "--"}}, false},
 		{"double dash", "--", Bundling, []optionPair{{Option: "--"}}, false},
 		{"double dash", "--", SingleDash, []optionPair{{Option: "--"}}, false},

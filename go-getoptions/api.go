@@ -13,22 +13,27 @@ type programTree struct {
 	Children []*programTree
 	Parent   *programTree
 	Level    int
-	option
 	command
+
+	// The option node is passed around as a copy (so the parent can be redefined), however, the data is a pointer so it is modified at all levels.
+	Option *option
 }
 
 // Str - not string so it doesn't get called automatically by Spew.
-func (t *programTree) Str() string {
-	level := t.Level
-	if t.Type == argTypeOption {
-		if t.Parent != nil {
-			level = t.Parent.Level + 1
+func (n *programTree) Str() string {
+	level := n.Level
+	if n.Type == argTypeOption {
+		if n.Parent != nil {
+			level = n.Parent.Level + 1
 		}
 	}
-	out := strings.Repeat("  ", level) + fmt.Sprintf("Name: %v, Type: %v", t.Name, t.Type)
-	if len(t.Children) > 0 {
+	out := strings.Repeat("  ", level) + fmt.Sprintf("Name: %v, Type: %v", n.Name, n.Type)
+	if n.Parent != nil {
+		out += fmt.Sprintf(", Parent: %v", n.Parent.Name)
+	}
+	if len(n.Children) > 0 {
 		out += ", children: [\n"
-		for _, child := range t.Children {
+		for _, child := range n.Children {
 			out += child.Str()
 		}
 		out += strings.Repeat("  ", level) + "]\n"
@@ -36,6 +41,26 @@ func (t *programTree) Str() string {
 		out += ", children: []\n"
 	}
 	return out
+}
+
+// Copy - Returns a copy of programTree that maintains a pointer to the underlying data
+func (n *programTree) Copy() *programTree {
+	// a := *n
+	// c := &a
+	parent := *n.Parent
+	c := &programTree{
+		Type:     n.Type,
+		Name:     n.Name,
+		Children: n.Children,
+		Parent:   &parent,
+		Option:   n.Option,
+	}
+	return c
+}
+
+func (n *programTree) SetParent(p *programTree) *programTree {
+	n.Parent = p
+	return n
 }
 
 func getNode(tree *programTree, element ...string) (*programTree, error) {
@@ -68,8 +93,10 @@ type option struct {
 	Called   bool
 	CalledAs string
 	Min, Max int // Minimum and Maximun amount of fields to pass to option in one call.
-	// TODO: Add pointer to underlying data
-	// The rest of the option will be copied but the pointer to the data needs to stay.
+
+	// option data section
+	Value   interface{}
+	PString *string
 }
 
 // command - Fields that only make sense for a command
@@ -82,10 +109,10 @@ func newCLIArg(t argType, name string, args ...string) *programTree {
 		Type:     t,
 		Name:     name,
 		Children: []*programTree{},
-		option:   option{Args: []string{}},
+		Option:   &option{Args: []string{}},
 	}
 	if len(args) > 0 {
-		arg.Args = args
+		arg.Option.Args = args
 	}
 	return arg
 }
@@ -172,6 +199,9 @@ ARGS_LOOP:
 		// handle text
 		currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, iterator.Value()))
 	}
+
+	// TODO: Before returning the current node, parse EnvVars and update the values.
+
 	return currentProgramNode, &[]string{}, nil
 }
 
