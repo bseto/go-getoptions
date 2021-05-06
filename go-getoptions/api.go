@@ -92,6 +92,10 @@ type option struct {
 	Args     []string
 	Called   bool
 	CalledAs string
+
+	// TODO: with unknown at one level it might become known at another level, what to do then?
+	Unknown bool // Marks this option as one that wasn't declared or expected at this level
+
 	Min, Max int // Minimum and Maximun amount of fields to pass to option in one call.
 
 	// option data section
@@ -188,29 +192,36 @@ ARGS_LOOP:
 		// Currently go-getoptions has no knowledge of command options at the
 		// parents so it marks them as an unkonw option that needs to be used at a
 		// different level. It is as if it was ignoring getoptions.Pass.
-		if cliArgs, is := isOption(iterator.Value(), mode); is {
+		if optPair, is := isOption(iterator.Value(), mode); is {
 			// iterate over the possible cli args and try matching against expectations
-			for _, a := range cliArgs {
+			for _, a := range optPair {
 				matches := 0
 				for _, c := range currentProgramNode.Children {
 					if c.Type != argTypeOption {
 						continue
 					}
-					if _, ok := stringSliceIndex(append([]string{c.Name}, c.Option.Aliases...), a.Name); ok {
+					if _, ok := stringSliceIndex(append([]string{c.Name}, c.Option.Aliases...), a.Option); ok {
 						c.Option.Called = true
-						c.Option.CalledAs = a.Name
-						c.Option.Args = append(c.Option.Args, a.Option.Args...)
+						c.Option.CalledAs = a.Option
+						c.Option.Args = append(c.Option.Args, a.Args...)
 						matches++
 						// TODO: Handle option having a minimum bigger than 1
 					}
 				}
 				if matches > 1 {
 					// TODO: handle ambiguous option call error
+					continue
+				}
+				if matches == 0 {
+					// TODO: This is a new option, add it as a children and mark it as unknown
+					// TODO: This shouldn't append new children but update existing ones and isOption needs to be able to check if the option expects a follow up argument.
+					// Check min, check max and keep ingesting until something starts with `-` or matches a command.
+
+					opt := newCLIArg(currentProgramNode, argTypeOption, a.Option, a.Args...)
+					opt.Option.Unknown = true
+					currentProgramNode.Children = append(currentProgramNode.Children, opt)
 				}
 			}
-			// TODO: This shouldn't append new children but update existing ones and isOption needs to be able to check if the option expects a follow up argument.
-			// Check min, check max and keep ingesting until something starts with `-` or matches a command.
-			currentProgramNode.Children = append(currentProgramNode.Children, cliArgs...)
 			continue
 		}
 

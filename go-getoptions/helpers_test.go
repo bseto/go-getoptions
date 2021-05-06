@@ -3,55 +3,53 @@ package getoptions
 import (
 	"reflect"
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 func TestIsOption(t *testing.T) {
 	cases := []struct {
-		name     string
-		inputArg string
-		mode     Mode
-		expected []*programTree
-		isOption bool
+		name    string
+		in      string
+		mode    Mode
+		optPair []optionPair
+		is      bool
 	}{
-		{"lone dash", "-", Normal, []*programTree{newCLIArg(nil, argTypeOption, "-")}, true},
-		{"lone dash", "-", Bundling, []*programTree{newCLIArg(nil, argTypeOption, "-")}, true},
-		{"lone dash", "-", SingleDash, []*programTree{newCLIArg(nil, argTypeOption, "-")}, true},
+		{"lone dash", "-", Normal, []optionPair{{Option: "-"}}, true},
+		{"lone dash", "-", Bundling, []optionPair{{Option: "-"}}, true},
+		{"lone dash", "-", SingleDash, []optionPair{{Option: "-"}}, true},
 
 		// TODO: Lets not return an option here
 		// Lets let the caller identify this.
-		{"double dash", "--", Normal, []*programTree{newCLIArg(nil, argTypeTerminator, "--")}, false},
-		{"double dash", "--", Bundling, []*programTree{newCLIArg(nil, argTypeTerminator, "--")}, false},
-		{"double dash", "--", SingleDash, []*programTree{newCLIArg(nil, argTypeTerminator, "--")}, false},
+		{"double dash", "--", Normal, []optionPair{{Option: "--"}}, false},
+		{"double dash", "--", Bundling, []optionPair{{Option: "--"}}, false},
+		{"double dash", "--", SingleDash, []optionPair{{Option: "--"}}, false},
 
-		{"no option", "opt", Normal, []*programTree{}, false},
-		{"no option", "opt", Bundling, []*programTree{}, false},
-		{"no option", "opt", SingleDash, []*programTree{}, false},
+		{"no option", "opt", Normal, []optionPair{}, false},
+		{"no option", "opt", Bundling, []optionPair{}, false},
+		{"no option", "opt", SingleDash, []optionPair{}, false},
 
-		{"Long option", "--opt", Normal, []*programTree{newCLIArg(nil, argTypeOption, "opt")}, true},
-		{"Long option", "--opt", Bundling, []*programTree{newCLIArg(nil, argTypeOption, "opt")}, true},
-		{"Long option", "--opt", SingleDash, []*programTree{newCLIArg(nil, argTypeOption, "opt")}, true},
+		{"Long option", "--opt", Normal, []optionPair{{Option: "opt"}}, true},
+		{"Long option", "--opt", Bundling, []optionPair{{Option: "opt"}}, true},
+		{"Long option", "--opt", SingleDash, []optionPair{{Option: "opt"}}, true},
 
-		{"Long option with arg", "--opt=arg", Normal, []*programTree{newCLIArg(nil, argTypeOption, "opt", "arg")}, true},
-		{"Long option with arg", "--opt=arg", Bundling, []*programTree{newCLIArg(nil, argTypeOption, "opt", "arg")}, true},
-		{"Long option with arg", "--opt=arg", SingleDash, []*programTree{newCLIArg(nil, argTypeOption, "opt", "arg")}, true},
+		{"Long option with arg", "--opt=arg", Normal, []optionPair{{Option: "opt", Args: []string{"arg"}}}, true},
+		{"Long option with arg", "--opt=arg", Bundling, []optionPair{{Option: "opt", Args: []string{"arg"}}}, true},
+		{"Long option with arg", "--opt=arg", SingleDash, []optionPair{{Option: "opt", Args: []string{"arg"}}}, true},
 
-		{"short option", "-opt", Normal, []*programTree{newCLIArg(nil, argTypeOption, "opt")}, true},
-		{"short option", "-opt", Bundling, []*programTree{newCLIArg(nil, argTypeOption, "o"), newCLIArg(nil, argTypeOption, "p"), newCLIArg(nil, argTypeOption, "t")}, true},
-		{"short option", "-opt", SingleDash, []*programTree{newCLIArg(nil, argTypeOption, "o", "pt")}, true},
+		{"short option", "-opt", Normal, []optionPair{{Option: "opt"}}, true},
+		{"short option", "-opt", Bundling, []optionPair{{Option: "o"}, {Option: "p"}, {Option: "t"}}, true},
+		{"short option", "-opt", SingleDash, []optionPair{{Option: "o", Args: []string{"pt"}}}, true},
 
-		{"short option with arg", "-opt=arg", Normal, []*programTree{newCLIArg(nil, argTypeOption, "opt", "arg")}, true},
-		{"short option with arg", "-opt=arg", Bundling, []*programTree{newCLIArg(nil, argTypeOption, "o"), newCLIArg(nil, argTypeOption, "p"), newCLIArg(nil, argTypeOption, "t", "arg")}, true},
-		{"short option with arg", "-opt=arg", SingleDash, []*programTree{newCLIArg(nil, argTypeOption, "o", "pt=arg")}, true},
+		{"short option with arg", "-opt=arg", Normal, []optionPair{{Option: "opt", Args: []string{"arg"}}}, true},
+		{"short option with arg", "-opt=arg", Bundling, []optionPair{{Option: "o"}, {Option: "p"}, {Option: "t", Args: []string{"arg"}}}, true},
+		{"short option with arg", "-opt=arg", SingleDash, []optionPair{{Option: "o", Args: []string{"pt=arg"}}}, true},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			buf := setupLogging()
-			output, is := isOption(tt.inputArg, tt.mode)
-			if !reflect.DeepEqual(output, tt.expected) || is != tt.isOption {
-				t.Errorf("input: %s, mode: %d\nexpected (%v) tree: %s\n got: (%v) %s\n",
-					tt.inputArg, tt.mode, tt.isOption, spew.Sdump(tt.expected), is, spew.Sdump(output))
+			optPair, is := isOption(tt.in, tt.mode)
+			if !reflect.DeepEqual(optPair, tt.optPair) || is != tt.is {
+				t.Errorf("isOption(%q, %q) == (%q, %v), want (%q, %v)",
+					tt.in, tt.mode, optPair, is, tt.optPair, tt.is)
 			}
 			t.Log(buf.String())
 		})
