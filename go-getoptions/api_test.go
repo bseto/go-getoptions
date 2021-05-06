@@ -56,19 +56,11 @@ func TestAPI(t *testing.T) {
 				opt.Option.CalledAs = "rootopt1"
 				return tree
 			}()},
-			// {"terminator", []string{"--", "--opt1"}, Normal, &programTree{
-			// 	Type:   argTypeProgname,
-			// 	Name:   os.Args[0],
-			// 	option: option{Args: []string{"--", "--opt1"}},
-			// 	Children: []*programTree{
-			// 		{
-			// 			Type:     argTypeText,
-			// 			Name:     "--opt1",
-			// 			option:   option{Args: []string{}},
-			// 			Children: []*programTree{},
-			// 		},
-			// 	},
-			// }},
+			{"terminator", []string{"--", "--opt1"}, Normal, func() *programTree {
+				tree := setupOpt().programTree
+				tree.Children = append(tree.Children, newCLIArg(tree, argTypeText, "--opt1"))
+				return tree
+			}()},
 			// {"command", []string{"--opt1", "cmd1", "--cmd1opt1"}, Normal, &programTree{
 			// 	Type:   argTypeProgname,
 			// 	Name:   os.Args[0],

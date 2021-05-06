@@ -200,6 +200,8 @@ ARGS_LOOP:
 					if c.Type != argTypeOption {
 						continue
 					}
+					// handle full option match
+					// TODO: handle partial matches
 					if _, ok := stringSliceIndex(append([]string{c.Name}, c.Option.Aliases...), a.Option); ok {
 						c.Option.Called = true
 						c.Option.CalledAs = a.Option
