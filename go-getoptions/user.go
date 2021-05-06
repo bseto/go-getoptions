@@ -23,6 +23,16 @@ const (
 	SingleDash
 )
 
+// UnknownMode - Unknown option mode
+type UnknownMode int
+
+// Unknown option modes
+const (
+	Fail UnknownMode = iota
+	Warn
+	Pass
+)
+
 // CommandFn - Function signature for commands
 type CommandFn func(context.Context, *GetOpt, []string) error
 

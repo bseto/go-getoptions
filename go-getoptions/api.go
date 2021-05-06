@@ -114,7 +114,10 @@ func newCLIArg(parent *programTree, t argType, name string, args ...string) *pro
 		Name:     name,
 		Parent:   parent,
 		Children: []*programTree{},
-		Option:   &option{Args: []string{}},
+		Option: &option{
+			Aliases: []string{name}, // First alias is the name, it allows to iterate in a single list to find all possible values
+			Args:    []string{},
+		},
 	}
 	if len(args) > 0 {
 		arg.Option.Args = args
@@ -184,7 +187,7 @@ ARGS_LOOP:
 					continue
 				}
 				// handle full option match, this allows to have - defined as an alias
-				if _, ok := stringSliceIndex(append([]string{c.Name}, c.Option.Aliases...), "-"); ok {
+				if _, ok := stringSliceIndex(c.Option.Aliases, "-"); ok {
 					c.Option.Called = true
 					c.Option.CalledAs = "-"
 					continue ARGS_LOOP
@@ -222,7 +225,7 @@ ARGS_LOOP:
 					}
 					// handle full option match
 					// TODO: handle partial matches
-					if _, ok := stringSliceIndex(append([]string{c.Name}, c.Option.Aliases...), a.Option); ok {
+					if _, ok := stringSliceIndex(c.Option.Aliases, a.Option); ok {
 						c.Option.Called = true
 						c.Option.CalledAs = a.Option
 						c.Option.Args = append(c.Option.Args, a.Args...)
