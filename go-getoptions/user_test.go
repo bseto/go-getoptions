@@ -65,12 +65,7 @@ func TestTrees(t *testing.T) {
 			Name:     os.Args[0],
 			Children: []*programTree{},
 		}
-		rootopt1 := &programTree{
-			Type:     argTypeOption,
-			Name:     "rootopt1",
-			Parent:   root,
-			Children: []*programTree{},
-		}
+		rootopt1 := newCLIArg(root, argTypeOption, "rootopt1")
 		cmd1 := &programTree{
 			Type:     argTypeCommand,
 			Name:     "cmd1",
@@ -78,12 +73,7 @@ func TestTrees(t *testing.T) {
 			Children: []*programTree{},
 			Level:    1,
 		}
-		cmd1opt1 := &programTree{
-			Type:     argTypeOption,
-			Name:     "cmd1opt1",
-			Parent:   cmd1,
-			Children: []*programTree{},
-		}
+		cmd1opt1 := newCLIArg(cmd1, argTypeOption, "cmd1opt1")
 		sub1cmd1 := &programTree{
 			Type:     argTypeCommand,
 			Name:     "sub1cmd1",
@@ -91,12 +81,7 @@ func TestTrees(t *testing.T) {
 			Children: []*programTree{},
 			Level:    2,
 		}
-		sub1cmd1opt1 := &programTree{
-			Type:     argTypeOption,
-			Name:     "sub1cmd1opt1",
-			Parent:   sub1cmd1,
-			Children: []*programTree{},
-		}
+		sub1cmd1opt1 := newCLIArg(sub1cmd1, argTypeOption, "sub1cmd1opt1")
 		cmd2 := &programTree{
 			Type:     argTypeCommand,
 			Name:     "cmd2",
@@ -104,12 +89,7 @@ func TestTrees(t *testing.T) {
 			Children: []*programTree{},
 			Level:    1,
 		}
-		cmd2opt1 := &programTree{
-			Type:     argTypeOption,
-			Name:     "cmd2opt1",
-			Parent:   cmd2,
-			Children: []*programTree{},
-		}
+		cmd2opt1 := newCLIArg(cmd2, argTypeOption, "cmd2opt1")
 
 		root.Children = append(root.Children, []*programTree{
 			rootopt1,
