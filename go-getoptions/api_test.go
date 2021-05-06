@@ -20,7 +20,8 @@ func TestAPI(t *testing.T) {
 			{"empty", []string{}, Normal, setupOpt().programTree},
 			{"text", []string{"txt"}, Normal, func() *programTree {
 				tree := setupOpt().programTree
-				tree.Children = append(tree.Children, newCLIArg(tree, argTypeText, "txt"))
+				value := "txt"
+				tree.ChildText = append(tree.ChildText, &value)
 				return tree
 			}()},
 			{"command", []string{"cmd1"}, Normal, func() *programTree {
@@ -35,7 +36,8 @@ func TestAPI(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				n.Children = append(n.Children, newCLIArg(n, argTypeText, "txt"))
+				value := "txt"
+				n.ChildText = append(n.ChildText, &value)
 				return n
 			}()},
 			{"text to sub command", []string{"cmd1", "sub1cmd1", "txt"}, Normal, func() *programTree {
@@ -43,37 +45,38 @@ func TestAPI(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				n.Children = append(n.Children, newCLIArg(n, argTypeText, "txt"))
+				value := "txt"
+				n.ChildText = append(n.ChildText, &value)
 				return n
 			}()},
 			{"option", []string{"--rootopt1"}, Normal, func() *programTree {
 				tree := setupOpt().programTree
-				opt, err := getNode(tree, "rootopt1")
-				if err != nil {
-					t.Fatalf("unexpected error: %s", err)
+				opt, ok := tree.ChildOptions["rootopt1"]
+				if !ok {
+					t.Fatalf("not found")
 				}
-				opt.Option.Called = true
-				opt.Option.CalledAs = "rootopt1"
+				opt.Called = true
+				opt.CalledAs = "rootopt1"
 				return tree
 			}()},
 			{"terminator", []string{"--", "--opt1"}, Normal, func() *programTree {
 				tree := setupOpt().programTree
-				tree.Children = append(tree.Children, newCLIArg(tree, argTypeText, "--opt1"))
+				value := "--opt1"
+				tree.ChildText = append(tree.ChildText, &value)
 				return tree
 			}()},
 			{"lonesome dash", []string{"cmd1", "sub2cmd1", "-"}, Normal, func() *programTree {
 				tree := setupOpt().programTree
-				opt, err := getNode(tree, "cmd1", "sub2cmd1", "-")
-				if err != nil {
-					t.Fatalf("unexpected error: %s, %s", err, opt.Str())
-				}
-				opt.Option.Called = true
-				opt.Option.CalledAs = "-"
-
 				sub2cmd1, err := getNode(tree, "cmd1", "sub2cmd1")
 				if err != nil {
-					t.Fatalf("unexpected error: %s, %s", err, opt.Str())
+					t.Fatalf("unexpected error: %s, %s", err, sub2cmd1.Str())
 				}
+				opt, ok := sub2cmd1.ChildOptions["-"]
+				if !ok {
+					t.Fatalf("not found: %s", sub2cmd1.Str())
+				}
+				opt.Called = true
+				opt.CalledAs = "-"
 				return sub2cmd1
 			}()},
 			// {"command", []string{"--opt1", "cmd1", "--cmd1opt1"}, Normal, &programTree{

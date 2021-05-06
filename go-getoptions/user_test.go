@@ -64,79 +64,75 @@ func TestTrees(t *testing.T) {
 	t.Run("programTree", func(t *testing.T) {
 		tree := setupOpt().programTree
 		root := &programTree{
-			Type:     argTypeProgname,
-			Name:     os.Args[0],
-			Children: []*programTree{},
+			Type:          argTypeProgname,
+			Name:          os.Args[0],
+			ChildCommands: map[string]*programTree{},
+			ChildOptions:  map[string]*option{},
 		}
-		rootopt1 := newCLIArg(root, argTypeOption, "rootopt1")
+		rootopt1 := newCLIOption(root, "rootopt1")
 		cmd1 := &programTree{
-			Type:     argTypeCommand,
-			Name:     "cmd1",
-			Parent:   root,
-			Children: []*programTree{},
-			Level:    1,
+			Type:          argTypeCommand,
+			Name:          "cmd1",
+			Parent:        root,
+			ChildCommands: map[string]*programTree{},
+			ChildOptions:  map[string]*option{},
+			Level:         1,
 		}
-		cmd1opt1 := newCLIArg(cmd1, argTypeOption, "cmd1opt1")
+		cmd1opt1 := newCLIOption(cmd1, "cmd1opt1")
 		sub1cmd1 := &programTree{
-			Type:     argTypeCommand,
-			Name:     "sub1cmd1",
-			Parent:   cmd1,
-			Children: []*programTree{},
-			Level:    2,
+			Type:          argTypeCommand,
+			Name:          "sub1cmd1",
+			Parent:        cmd1,
+			ChildCommands: map[string]*programTree{},
+			ChildOptions:  map[string]*option{},
+			Level:         2,
 		}
-		sub1cmd1opt1 := newCLIArg(sub1cmd1, argTypeOption, "sub1cmd1opt1")
+		sub1cmd1opt1 := newCLIOption(sub1cmd1, "sub1cmd1opt1")
 		sub2cmd1 := &programTree{
-			Type:     argTypeCommand,
-			Name:     "sub2cmd1",
-			Parent:   cmd1,
-			Children: []*programTree{},
-			Level:    2,
+			Type:          argTypeCommand,
+			Name:          "sub2cmd1",
+			Parent:        cmd1,
+			ChildCommands: map[string]*programTree{},
+			ChildOptions:  map[string]*option{},
+			Level:         2,
 		}
-		sub2cmd1opt1 := newCLIArg(sub2cmd1, argTypeOption, "-")
+		sub2cmd1opt1 := newCLIOption(sub2cmd1, "-")
 		cmd2 := &programTree{
-			Type:     argTypeCommand,
-			Name:     "cmd2",
-			Parent:   root,
-			Children: []*programTree{},
-			Level:    1,
+			Type:          argTypeCommand,
+			Name:          "cmd2",
+			Parent:        root,
+			ChildCommands: map[string]*programTree{},
+			ChildOptions:  map[string]*option{},
+			Level:         1,
 		}
-		cmd2opt1 := newCLIArg(cmd2, argTypeOption, "cmd2opt1")
+		cmd2opt1 := newCLIOption(cmd2, "cmd2opt1")
 
-		root.Children = append(root.Children, []*programTree{
-			rootopt1,
-			cmd1,
-			cmd2,
-		}...)
+		root.ChildOptions["rootopt1"] = rootopt1
+		root.ChildCommands["cmd1"] = cmd1
+		root.ChildCommands["cmd2"] = cmd2
 
 		rootopt1Copycmd1 := rootopt1.Copy().SetParent(cmd1)
-		cmd1.Children = append(cmd1.Children, []*programTree{
-			rootopt1Copycmd1,
-			cmd1opt1,
-			sub1cmd1,
-			sub2cmd1,
-		}...)
+		cmd1.ChildOptions["rootopt1"] = rootopt1Copycmd1
+		cmd1.ChildOptions["cmd1opt1"] = cmd1opt1
+		cmd1.ChildCommands["sub1cmd1"] = sub1cmd1
+		cmd1.ChildCommands["sub2cmd1"] = sub2cmd1
 
 		rootopt1Copycmd2 := rootopt1.Copy().SetParent(cmd2)
-		cmd2.Children = append(cmd2.Children, []*programTree{
-			rootopt1Copycmd2,
-			cmd2opt1,
-		}...)
+		cmd2.ChildOptions["rootopt1"] = rootopt1Copycmd2
+		cmd2.ChildOptions["cmd2opt1"] = cmd2opt1
 
 		rootopt1Copysub1cmd1 := rootopt1.Copy().SetParent(sub1cmd1)
 		cmd1opt1Copysub1cmd1 := cmd1opt1.Copy().SetParent(sub1cmd1)
-		sub1cmd1.Children = append(sub1cmd1.Children, []*programTree{
-			rootopt1Copysub1cmd1,
-			cmd1opt1Copysub1cmd1,
-			sub1cmd1opt1,
-		}...)
+
+		sub1cmd1.ChildOptions["rootopt1"] = rootopt1Copysub1cmd1
+		sub1cmd1.ChildOptions["cmd1opt1"] = cmd1opt1Copysub1cmd1
+		sub1cmd1.ChildOptions["sub1cmd1opt1"] = sub1cmd1opt1
 
 		rootopt1Copysub2cmd1 := rootopt1.Copy().SetParent(sub2cmd1)
 		cmd1opt1Copysub2cmd1 := cmd1opt1.Copy().SetParent(sub2cmd1)
-		sub2cmd1.Children = append(sub2cmd1.Children, []*programTree{
-			rootopt1Copysub2cmd1,
-			cmd1opt1Copysub2cmd1,
-			sub2cmd1opt1,
-		}...)
+		sub2cmd1.ChildOptions["rootopt1"] = rootopt1Copysub2cmd1
+		sub2cmd1.ChildOptions["cmd1opt1"] = cmd1opt1Copysub2cmd1
+		sub2cmd1.ChildOptions["-"] = sub2cmd1opt1
 
 		if !reflect.DeepEqual(root, tree) {
 			t.Errorf("expected tree: %s, got: %s\n", SpewToFile(t, root, "expected"), SpewToFile(t, tree, "got"))

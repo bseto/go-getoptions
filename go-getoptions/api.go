@@ -8,15 +8,14 @@ import (
 )
 
 type programTree struct {
-	Type     argType
-	Name     string
-	Children []*programTree
-	Parent   *programTree
-	Level    int
+	Type          argType
+	Name          string
+	ChildCommands map[string]*programTree
+	ChildOptions  map[string]*option
+	ChildText     []*string
+	Parent        *programTree
+	Level         int
 	command
-
-	// The option node is passed around as a copy (so the parent can be redefined), however, the data is a pointer so it is modified at all levels.
-	Option *option
 }
 
 // Str - not string so it doesn't get called automatically by Spew.
@@ -31,15 +30,25 @@ func (n *programTree) Str() string {
 	if n.Parent != nil {
 		out += fmt.Sprintf(", Parent: %v", n.Parent.Name)
 	}
-	if len(n.Children) > 0 {
-		out += ", children: [\n"
-		for _, child := range n.Children {
-			out += child.Str()
+	if len(n.ChildOptions) > 0 {
+		out += ", child options: [\n"
+		for _, v := range n.ChildOptions {
+			out += v.Str()
 		}
-		out += strings.Repeat("  ", level) + "]\n"
+		out += strings.Repeat("  ", level) + "]"
 	} else {
-		out += ", children: []\n"
+		out += ", child commands: []"
 	}
+	if len(n.ChildCommands) > 0 {
+		out += ", child commands: [\n"
+		for _, v := range n.ChildCommands {
+			out += v.Str()
+		}
+		out += strings.Repeat("  ", level) + "]"
+	} else {
+		out += ", child commands: []"
+	}
+	out += "\n"
 	return out
 }
 
@@ -49,11 +58,12 @@ func (n *programTree) Copy() *programTree {
 	// c := &a
 	parent := *n.Parent
 	c := &programTree{
-		Type:     n.Type,
-		Name:     n.Name,
-		Children: n.Children,
-		Parent:   &parent,
-		Option:   n.Option,
+		Type:          n.Type,
+		Name:          n.Name,
+		ChildCommands: n.ChildCommands,
+		ChildOptions:  n.ChildOptions,
+		ChildText:     n.ChildText,
+		Parent:        &parent,
 	}
 	return c
 }
@@ -67,10 +77,8 @@ func getNode(tree *programTree, element ...string) (*programTree, error) {
 	if len(element) == 0 {
 		return tree, nil
 	}
-	for _, child := range tree.Children {
-		if child.Name == element[0] {
-			return getNode(child, element[1:]...)
-		}
+	if child, ok := tree.ChildCommands[element[0]]; ok {
+		return getNode(child, element[1:]...)
 	}
 	return tree, fmt.Errorf("not found")
 }
@@ -87,6 +95,10 @@ const (
 
 // option - Fields that only make sense for an option
 type option struct {
+	Name   string
+	Parent *programTree
+
+	// TODO: Aliases will point to the option when indexing
 	Aliases  []string
 	Args     []string
 	Called   bool
@@ -102,25 +114,53 @@ type option struct {
 	PString *string
 }
 
+func (n *option) Str() string {
+	level := 1
+	if n.Parent != nil {
+		level = n.Parent.Level + 1
+	}
+	out := ""
+	out += strings.Repeat("  ", level)
+	out += fmt.Sprintf("Option: %s, Parent: %s, Aliases: %v\n", n.Name, n.Parent.Name, n.Aliases)
+	return out
+}
+
+func (n *option) Copy() *option {
+	parent := *n.Parent
+	c := &option{
+		Name:     n.Name,
+		Parent:   &parent,
+		Aliases:  n.Aliases,
+		Args:     n.Args,
+		Called:   n.Called,
+		CalledAs: n.CalledAs,
+	}
+	return c
+}
+
+func (n *option) SetParent(p *programTree) *option {
+	n.Parent = p
+	return n
+}
+
 // command - Fields that only make sense for a command
 type command struct {
 	CommandFn CommandFn
 }
 
-// TODO: Make this a method of tree so we can add parent information
-func newCLIArg(parent *programTree, t argType, name string, args ...string) *programTree {
-	arg := &programTree{
-		Type:     t,
-		Name:     name,
-		Parent:   parent,
-		Children: []*programTree{},
-		Option: &option{
-			Aliases: []string{name}, // First alias is the name, it allows to iterate in a single list to find all possible values
-			Args:    []string{},
-		},
+// TODO: Make this a method of tree so we can add parent information.
+// Maybe not a good idea? Would it complicate testing?
+func newCLIOption(parent *programTree, name string, args ...string) *option {
+	// TODO: the way we are defining an option as a name in the tree makes it so the tree has children in an array, one element could be cmd1 that is a command and another cmd1 that is an option.
+	// Not a problem when the datastructure is a list, but an issue if I want to change to a map to automatically index them and know when an alias is already defined.
+	arg := &option{
+		Name:    name,
+		Parent:  parent,
+		Aliases: []string{name}, // First alias is the name, it allows to iterate in a single list to find all possible values
+		Args:    []string{},
 	}
 	if len(args) > 0 {
-		arg.Option.Args = args
+		arg.Args = args
 	}
 	return arg
 }
@@ -175,27 +215,25 @@ ARGS_LOOP:
 		// handle terminator
 		if iterator.Value() == "--" {
 			for iterator.Next() {
-				currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(currentProgramNode, argTypeText, iterator.Value()))
+				value := iterator.Value()
+				currentProgramNode.ChildText = append(currentProgramNode.ChildText, &value)
 			}
 			break
 		}
 
 		// Handle lonesome dash
 		if iterator.Value() == "-" {
-			for _, c := range currentProgramNode.Children {
-				if c.Type != argTypeOption {
-					continue
-				}
+			for _, v := range currentProgramNode.ChildOptions {
 				// handle full option match, this allows to have - defined as an alias
-				if _, ok := stringSliceIndex(c.Option.Aliases, "-"); ok {
-					c.Option.Called = true
-					c.Option.CalledAs = "-"
+				if _, ok := stringSliceIndex(v.Aliases, "-"); ok {
+					v.Called = true
+					v.CalledAs = "-"
 					continue ARGS_LOOP
 				}
 			}
-			opt := newCLIArg(currentProgramNode, argTypeOption, "-")
-			opt.Option.Unknown = true
-			currentProgramNode.Children = append(currentProgramNode.Children, opt)
+			opt := newCLIOption(currentProgramNode, "-")
+			opt.Unknown = true
+			currentProgramNode.ChildOptions["-"] = opt
 			continue ARGS_LOOP
 		}
 
@@ -219,16 +257,13 @@ ARGS_LOOP:
 			// iterate over the possible cli args and try matching against expectations
 			for _, a := range optPair {
 				matches := 0
-				for _, c := range currentProgramNode.Children {
-					if c.Type != argTypeOption {
-						continue
-					}
+				for _, v := range currentProgramNode.ChildOptions {
 					// handle full option match
 					// TODO: handle partial matches
-					if _, ok := stringSliceIndex(c.Option.Aliases, a.Option); ok {
-						c.Option.Called = true
-						c.Option.CalledAs = a.Option
-						c.Option.Args = append(c.Option.Args, a.Args...)
+					if _, ok := stringSliceIndex(v.Aliases, a.Option); ok {
+						v.Called = true
+						v.CalledAs = a.Option
+						v.Args = append(v.Args, a.Args...)
 						matches++
 						// TODO: Handle option having a minimum bigger than 1
 					}
@@ -242,9 +277,9 @@ ARGS_LOOP:
 					// TODO: This shouldn't append new children but update existing ones and isOption needs to be able to check if the option expects a follow up argument.
 					// Check min, check max and keep ingesting until something starts with `-` or matches a command.
 
-					opt := newCLIArg(currentProgramNode, argTypeOption, a.Option, a.Args...)
-					opt.Option.Unknown = true
-					currentProgramNode.Children = append(currentProgramNode.Children, opt)
+					opt := newCLIOption(currentProgramNode, a.Option, a.Args...)
+					opt.Unknown = true
+					currentProgramNode.ChildOptions[a.Option] = opt
 				}
 			}
 			continue
@@ -256,16 +291,16 @@ ARGS_LOOP:
 		// Since at the end we return the programTree node, we will only care about handling the options at one single level.
 
 		// handle commands and subcommands
-		for _, child := range currentProgramNode.Children {
-			// Only check commands
-			if child.Type == argTypeCommand && child.Name == iterator.Value() {
-				currentProgramNode = child
+		for k, v := range currentProgramNode.ChildCommands {
+			if k == iterator.Value() {
+				currentProgramNode = v
 				continue ARGS_LOOP
 			}
 		}
 
 		// handle text
-		currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(currentProgramNode, argTypeText, iterator.Value()))
+		value := iterator.Value()
+		currentProgramNode.ChildText = append(currentProgramNode.ChildText, &value)
 	}
 
 	// TODO: Before returning the current node, parse EnvVars and update the values.
