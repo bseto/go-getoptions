@@ -19,16 +19,16 @@ TODO: Here is where we should handle windows /option types.
 func isOption(s string, mode Mode) ([]*programTree, bool) {
 	// Handle especial cases
 	if s == "--" {
-		return []*programTree{newCLIArg(argTypeTerminator, "--")}, false
+		return []*programTree{newCLIArg(nil, argTypeTerminator, "--")}, false
 	} else if s == "-" {
-		return []*programTree{newCLIArg(argTypeOption, "-")}, true
+		return []*programTree{newCLIArg(nil, argTypeOption, "-")}, true
 	}
 
 	match := isOptionRegex.FindStringSubmatch(s)
 	if len(match) > 0 {
 		// check long option
 		if match[1] == "--" {
-			opt := newCLIArg(argTypeOption, match[2])
+			opt := newCLIArg(nil, argTypeOption, match[2])
 			args := strings.TrimPrefix(match[3], "=")
 			if args != "" {
 				// TODO: Here is where we could split on comma
@@ -41,7 +41,7 @@ func isOption(s string, mode Mode) ([]*programTree, bool) {
 		case Bundling:
 			opts := []*programTree{}
 			for _, option := range strings.Split(match[2], "") {
-				opt := newCLIArg(argTypeOption, option)
+				opt := newCLIArg(nil, argTypeOption, option)
 				opts = append(opts, opt)
 			}
 			if len(opts) > 0 {
@@ -54,7 +54,7 @@ func isOption(s string, mode Mode) ([]*programTree, bool) {
 		case SingleDash:
 			opts := []*programTree{}
 			for _, option := range []string{strings.Split(match[2], "")[0]} {
-				opt := newCLIArg(argTypeOption, option)
+				opt := newCLIArg(nil, argTypeOption, option)
 				opts = append(opts, opt)
 			}
 			if len(opts) > 0 {
@@ -63,7 +63,7 @@ func isOption(s string, mode Mode) ([]*programTree, bool) {
 			}
 			return opts, true
 		default:
-			opt := newCLIArg(argTypeOption, match[2])
+			opt := newCLIArg(nil, argTypeOption, match[2])
 			args := strings.TrimPrefix(match[3], "=")
 			if args != "" {
 				opt.Option.Args = []string{args}
@@ -72,4 +72,14 @@ func isOption(s string, mode Mode) ([]*programTree, bool) {
 		}
 	}
 	return []*programTree{}, false
+}
+
+// stringSliceIndex - indicates if an element is found in the slice and what its index is
+func stringSliceIndex(ss []string, e string) (int, bool) {
+	for i, s := range ss {
+		if s == e {
+			return i, true
+		}
+	}
+	return -1, false
 }

@@ -64,13 +64,8 @@ func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 }
 
 func (gopt *GetOpt) String(name, def string, fns ...ModifyFn) *string {
-	gopt.programTree.Children = append(gopt.programTree.Children, &programTree{
-		Type:     argTypeOption,
-		Name:     name,
-		Children: []*programTree{},
-		Parent:   gopt.programTree,
-		// Level:    gopt.programTree.Level + 1,
-	})
+	n := newCLIArg(gopt.programTree, argTypeOption, name)
+	gopt.programTree.Children = append(gopt.programTree.Children, n)
 	return nil
 }
 

@@ -105,10 +105,11 @@ type command struct {
 }
 
 // TODO: Make this a method of tree so we can add parent information
-func newCLIArg(t argType, name string, args ...string) *programTree {
+func newCLIArg(parent *programTree, t argType, name string, args ...string) *programTree {
 	arg := &programTree{
 		Type:     t,
 		Name:     name,
+		Parent:   parent,
 		Children: []*programTree{},
 		Option:   &option{Args: []string{}},
 	}
@@ -168,7 +169,7 @@ ARGS_LOOP:
 		// handle terminator
 		if iterator.Value() == "--" {
 			for iterator.Next() {
-				currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, iterator.Value()))
+				currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(currentProgramNode, argTypeText, iterator.Value()))
 			}
 			break
 		}
@@ -187,10 +188,29 @@ ARGS_LOOP:
 		// Currently go-getoptions has no knowledge of command options at the
 		// parents so it marks them as an unkonw option that needs to be used at a
 		// different level. It is as if it was ignoring getoptions.Pass.
-		if cliArg, is := isOption(iterator.Value(), mode); is {
+		if cliArgs, is := isOption(iterator.Value(), mode); is {
+			// iterate over the possible cli args and try matching against expectations
+			for _, a := range cliArgs {
+				matches := 0
+				for _, c := range currentProgramNode.Children {
+					if c.Type != argTypeOption {
+						continue
+					}
+					if _, ok := stringSliceIndex(append([]string{c.Name}, c.Option.Aliases...), a.Name); ok {
+						c.Option.Called = true
+						c.Option.CalledAs = a.Name
+						c.Option.Args = append(c.Option.Args, a.Option.Args...)
+						matches++
+						// TODO: Handle option having a minimum bigger than 1
+					}
+				}
+				if matches > 1 {
+					// TODO: handle ambiguous option call error
+				}
+			}
 			// TODO: This shouldn't append new children but update existing ones and isOption needs to be able to check if the option expects a follow up argument.
 			// Check min, check max and keep ingesting until something starts with `-` or matches a command.
-			currentProgramNode.Children = append(currentProgramNode.Children, cliArg...)
+			currentProgramNode.Children = append(currentProgramNode.Children, cliArgs...)
 			continue
 		}
 
@@ -209,7 +229,7 @@ ARGS_LOOP:
 		}
 
 		// handle text
-		currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(argTypeText, iterator.Value()))
+		currentProgramNode.Children = append(currentProgramNode.Children, newCLIArg(currentProgramNode, argTypeText, iterator.Value()))
 	}
 
 	// TODO: Before returning the current node, parse EnvVars and update the values.

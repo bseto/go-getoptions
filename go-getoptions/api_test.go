@@ -20,7 +20,7 @@ func TestAPI(t *testing.T) {
 			{"empty", []string{}, Normal, setupOpt().programTree},
 			{"text", []string{"txt"}, Normal, func() *programTree {
 				tree := setupOpt().programTree
-				tree.Children = append(tree.Children, newCLIArg(argTypeText, "txt"))
+				tree.Children = append(tree.Children, newCLIArg(tree, argTypeText, "txt"))
 				return tree
 			}()},
 			{"command", []string{"cmd1"}, Normal, func() *programTree {
@@ -35,7 +35,7 @@ func TestAPI(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				n.Children = append(n.Children, newCLIArg(argTypeText, "txt"))
+				n.Children = append(n.Children, newCLIArg(n, argTypeText, "txt"))
 				return n
 			}()},
 			{"text to sub command", []string{"cmd1", "sub1cmd1", "txt"}, Normal, func() *programTree {
@@ -43,7 +43,7 @@ func TestAPI(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				n.Children = append(n.Children, newCLIArg(argTypeText, "txt"))
+				n.Children = append(n.Children, newCLIArg(n, argTypeText, "txt"))
 				return n
 			}()},
 			{"option", []string{"--rootopt1"}, Normal, func() *programTree {
