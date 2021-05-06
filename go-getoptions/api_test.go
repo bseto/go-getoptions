@@ -48,6 +48,12 @@ func TestAPI(t *testing.T) {
 			}()},
 			{"option", []string{"--rootopt1"}, Normal, func() *programTree {
 				tree := setupOpt().programTree
+				opt, err := getNode(tree, "rootopt1")
+				if err != nil {
+					t.Fatalf("unexpected error: %s", err)
+				}
+				opt.Option.Called = true
+				opt.Option.CalledAs = "rootopt1"
 				return tree
 			}()},
 			// {"terminator", []string{"--", "--opt1"}, Normal, &programTree{
