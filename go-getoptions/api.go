@@ -67,13 +67,12 @@ func getNode(tree *programTree, element ...string) (*programTree, error) {
 	if len(element) == 0 {
 		return tree, nil
 	}
-	currentNode := tree
-	for _, child := range currentNode.Children {
+	for _, child := range tree.Children {
 		if child.Name == element[0] {
 			return getNode(child, element[1:]...)
 		}
 	}
-	return tree, nil
+	return tree, fmt.Errorf("not found")
 }
 
 type argType int
@@ -178,7 +177,28 @@ ARGS_LOOP:
 			break
 		}
 
-		// TODO: Handle lonesome dash
+		// Handle lonesome dash
+		if iterator.Value() == "-" {
+			for _, c := range currentProgramNode.Children {
+				if c.Type != argTypeOption {
+					continue
+				}
+				// handle full option match, this allows to have - defined as an alias
+				if _, ok := stringSliceIndex(append([]string{c.Name}, c.Option.Aliases...), "-"); ok {
+					c.Option.Called = true
+					c.Option.CalledAs = "-"
+					continue ARGS_LOOP
+				}
+			}
+			opt := newCLIArg(currentProgramNode, argTypeOption, "-")
+			opt.Option.Unknown = true
+			currentProgramNode.Children = append(currentProgramNode.Children, opt)
+			continue ARGS_LOOP
+		}
+
+		// TODO: Handle unknonw option.
+		// It basically needs to be copied down to the command every time we find a command and it has to be validated against aliases and option name.
+		// If we were to check on require order and other modes without doing that work, passing --help after passing an unknown option would return an unknown option error and it would be annoying to the user.
 
 		// TODO: Handle case where option has an argument
 		// check for option

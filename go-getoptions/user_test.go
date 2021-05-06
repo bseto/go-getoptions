@@ -41,6 +41,9 @@ func setupOpt() *GetOpt {
 
 	sub1cmd1 := cmd1.NewCommand("sub1cmd1", "")
 	sub1cmd1.String("sub1cmd1opt1", "")
+
+	sub2cmd1 := cmd1.NewCommand("sub2cmd1", "")
+	sub2cmd1.String("-", "")
 	return opt
 }
 
@@ -82,6 +85,14 @@ func TestTrees(t *testing.T) {
 			Level:    2,
 		}
 		sub1cmd1opt1 := newCLIArg(sub1cmd1, argTypeOption, "sub1cmd1opt1")
+		sub2cmd1 := &programTree{
+			Type:     argTypeCommand,
+			Name:     "sub2cmd1",
+			Parent:   cmd1,
+			Children: []*programTree{},
+			Level:    2,
+		}
+		sub2cmd1opt1 := newCLIArg(sub2cmd1, argTypeOption, "-")
 		cmd2 := &programTree{
 			Type:     argTypeCommand,
 			Name:     "cmd2",
@@ -102,6 +113,7 @@ func TestTrees(t *testing.T) {
 			rootopt1Copycmd1,
 			cmd1opt1,
 			sub1cmd1,
+			sub2cmd1,
 		}...)
 
 		rootopt1Copycmd2 := rootopt1.Copy().SetParent(cmd2)
@@ -116,6 +128,14 @@ func TestTrees(t *testing.T) {
 			rootopt1Copysub1cmd1,
 			cmd1opt1Copysub1cmd1,
 			sub1cmd1opt1,
+		}...)
+
+		rootopt1Copysub2cmd1 := rootopt1.Copy().SetParent(sub2cmd1)
+		cmd1opt1Copysub2cmd1 := cmd1opt1.Copy().SetParent(sub2cmd1)
+		sub2cmd1.Children = append(sub2cmd1.Children, []*programTree{
+			rootopt1Copysub2cmd1,
+			cmd1opt1Copysub2cmd1,
+			sub2cmd1opt1,
 		}...)
 
 		if !reflect.DeepEqual(root, tree) {

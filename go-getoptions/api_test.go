@@ -61,6 +61,21 @@ func TestAPI(t *testing.T) {
 				tree.Children = append(tree.Children, newCLIArg(tree, argTypeText, "--opt1"))
 				return tree
 			}()},
+			{"lonesome dash", []string{"cmd1", "sub2cmd1", "-"}, Normal, func() *programTree {
+				tree := setupOpt().programTree
+				opt, err := getNode(tree, "cmd1", "sub2cmd1", "-")
+				if err != nil {
+					t.Fatalf("unexpected error: %s, %s", err, opt.Str())
+				}
+				opt.Option.Called = true
+				opt.Option.CalledAs = "-"
+
+				sub2cmd1, err := getNode(tree, "cmd1", "sub2cmd1")
+				if err != nil {
+					t.Fatalf("unexpected error: %s, %s", err, opt.Str())
+				}
+				return sub2cmd1
+			}()},
 			// {"command", []string{"--opt1", "cmd1", "--cmd1opt1"}, Normal, &programTree{
 			// 	Type:   argTypeProgname,
 			// 	Name:   os.Args[0],
