@@ -56,7 +56,7 @@ func TestAPI(t *testing.T) {
 					t.Fatalf("not found")
 				}
 				opt.Called = true
-				opt.CalledAs = "rootopt1"
+				opt.UsedAlias = "rootopt1"
 				return tree
 			}()},
 			{"terminator", []string{"--", "--opt1"}, Normal, func() *programTree {
@@ -76,7 +76,7 @@ func TestAPI(t *testing.T) {
 					t.Fatalf("not found: %s", sub2cmd1.Str())
 				}
 				opt.Called = true
-				opt.CalledAs = "-"
+				opt.UsedAlias = "-"
 				return sub2cmd1
 			}()},
 			// {"command", []string{"--opt1", "cmd1", "--cmd1opt1"}, Normal, &programTree{
@@ -172,7 +172,7 @@ func TestAPI(t *testing.T) {
 					t.Errorf("unexpected error")
 				}
 				if !reflect.DeepEqual(test.expected, argTree) {
-					t.Errorf("expected tree: %s, got: %s\n", SpewToFile(t, test.expected, "expected"), SpewToFile(t, argTree, "got"))
+					t.Errorf("expected tree, got: %s %s\n", SpewToFile(t, test.expected, "expected"), SpewToFile(t, argTree, "got"))
 					t.Fatalf("expected tree: \n%s\n got: \n%s\n", test.expected.Str(), argTree.Str())
 				}
 			})

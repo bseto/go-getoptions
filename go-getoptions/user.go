@@ -1,3 +1,11 @@
+// This file is part of go-getoptions.
+//
+// Copyright (C) 2015-2021  David Gamba Rios
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 package getoptions
 
 import (
@@ -5,6 +13,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/DavidGamba/go-getoptions/option"
 )
 
 var Logger = log.New(ioutil.Discard, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
@@ -44,7 +54,7 @@ func New() *GetOpt {
 		Type:          argTypeProgname,
 		Name:          os.Args[0],
 		ChildCommands: map[string]*programTree{},
-		ChildOptions:  map[string]*option{},
+		ChildOptions:  map[string]*option.Option{},
 		Level:         0,
 	}
 	return gopt
@@ -56,7 +66,7 @@ func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 		Type:          argTypeCommand,
 		Name:          name,
 		ChildCommands: map[string]*programTree{},
-		ChildOptions:  map[string]*option{},
+		ChildOptions:  map[string]*option.Option{},
 		Parent:        gopt.programTree,
 		Level:         gopt.programTree.Level + 1,
 	}
@@ -66,11 +76,12 @@ func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 		// The option parent doesn't match properly here.
 		// I should in a way create a copy of the option but I still want a pointer to the data.
 
-		c := v.Copy() // copy that maintains a pointer to the underlying data
-		c.SetParent(command)
+		// c := v.Copy() // copy that maintains a pointer to the underlying data
+		// c.SetParent(command)
 
 		// TODO: This is doing an overwrite, ensure it doesn't exist
-		command.ChildOptions[k] = c
+		// command.ChildOptions[k] = c
+		command.ChildOptions[k] = v
 	}
 	cmd.programTree = command
 	gopt.programTree.ChildCommands[name] = command
@@ -78,7 +89,7 @@ func (gopt *GetOpt) NewCommand(name string, description string) *GetOpt {
 }
 
 func (gopt *GetOpt) String(name, def string, fns ...ModifyFn) *string {
-	n := newCLIOption(gopt.programTree, name)
+	n := option.New(name, option.StringType, &def)
 	gopt.programTree.ChildOptions[name] = n
 
 	// for _, fn := range fns {

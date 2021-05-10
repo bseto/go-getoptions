@@ -2,8 +2,10 @@ package getoptions
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
+	"github.com/DavidGamba/go-getoptions/option"
 	"github.com/DavidGamba/go-getoptions/sliceiterator"
 )
 
@@ -11,7 +13,7 @@ type programTree struct {
 	Type          argType
 	Name          string
 	ChildCommands map[string]*programTree
-	ChildOptions  map[string]*option
+	ChildOptions  map[string]*option.Option
 	ChildText     []*string
 	Parent        *programTree
 	Level         int
@@ -26,25 +28,38 @@ func (n *programTree) Str() string {
 			level = n.Parent.Level + 1
 		}
 	}
-	out := strings.Repeat("  ", level) + fmt.Sprintf("Name: %v, Type: %v", n.Name, n.Type)
+	padding := func(n int) string {
+		return strings.Repeat("  ", n)
+	}
+	out := padding(level) + fmt.Sprintf("Name: %v, Type: %v", n.Name, n.Type)
 	if n.Parent != nil {
 		out += fmt.Sprintf(", Parent: %v", n.Parent.Name)
 	}
 	if len(n.ChildOptions) > 0 {
-		out += ", child options: [\n"
-		for _, v := range n.ChildOptions {
-			out += v.Str()
+		var keys []string
+		for k := range n.ChildOptions {
+			keys = append(keys, k)
 		}
-		out += strings.Repeat("  ", level) + "]"
+		sort.Strings(keys)
+		out += ", child options: [\n"
+		for _, k := range keys {
+			out += padding(level+1) + fmt.Sprintf("Name: %s, Aliases %v\n", n.ChildOptions[k].Name, n.ChildOptions[k].Aliases)
+		}
+		out += padding(level) + "]"
 	} else {
-		out += ", child commands: []"
+		out += ", child options: []"
 	}
 	if len(n.ChildCommands) > 0 {
-		out += ", child commands: [\n"
-		for _, v := range n.ChildCommands {
-			out += v.Str()
+		var keys []string
+		for k := range n.ChildCommands {
+			keys = append(keys, k)
 		}
-		out += strings.Repeat("  ", level) + "]"
+		sort.Strings(keys)
+		out += ", child commands: [\n"
+		for _, k := range keys {
+			out += n.ChildCommands[k].Str()
+		}
+		out += padding(level) + "]"
 	} else {
 		out += ", child commands: []"
 	}
@@ -93,56 +108,6 @@ const (
 	argTypeTerminator                // --
 )
 
-// option - Fields that only make sense for an option
-type option struct {
-	Name   string
-	Parent *programTree
-
-	// TODO: Aliases will point to the option when indexing
-	Aliases  []string
-	Args     []string
-	Called   bool
-	CalledAs string
-
-	// TODO: with unknown at one level it might become known at another level, what to do then?
-	Unknown bool // Marks this option as one that wasn't declared or expected at this level
-
-	Min, Max int // Minimum and Maximun amount of fields to pass to option in one call.
-
-	// option data section
-	Value   interface{}
-	PString *string
-}
-
-func (n *option) Str() string {
-	level := 1
-	if n.Parent != nil {
-		level = n.Parent.Level + 1
-	}
-	out := ""
-	out += strings.Repeat("  ", level)
-	out += fmt.Sprintf("Option: %s, Parent: %s, Aliases: %v\n", n.Name, n.Parent.Name, n.Aliases)
-	return out
-}
-
-func (n *option) Copy() *option {
-	parent := *n.Parent
-	c := &option{
-		Name:     n.Name,
-		Parent:   &parent,
-		Aliases:  n.Aliases,
-		Args:     n.Args,
-		Called:   n.Called,
-		CalledAs: n.CalledAs,
-	}
-	return c
-}
-
-func (n *option) SetParent(p *programTree) *option {
-	n.Parent = p
-	return n
-}
-
 // command - Fields that only make sense for a command
 type command struct {
 	CommandFn CommandFn
@@ -150,18 +115,11 @@ type command struct {
 
 // TODO: Make this a method of tree so we can add parent information.
 // Maybe not a good idea? Would it complicate testing?
-func newCLIOption(parent *programTree, name string, args ...string) *option {
-	// TODO: the way we are defining an option as a name in the tree makes it so the tree has children in an array, one element could be cmd1 that is a command and another cmd1 that is an option.
-	// Not a problem when the datastructure is a list, but an issue if I want to change to a map to automatically index them and know when an alias is already defined.
-	arg := &option{
-		Name:    name,
-		Parent:  parent,
-		Aliases: []string{name}, // First alias is the name, it allows to iterate in a single list to find all possible values
-		Args:    []string{},
-	}
-	if len(args) > 0 {
-		arg.Args = args
-	}
+func newCLIOption(parent *programTree, name string, args ...string) *option.Option {
+	data := []string{}
+	data = append(data, args...)
+	arg := option.New(name, option.StringRepeatType, &data)
+	arg.Unknown = true
 	return arg
 }
 
@@ -227,12 +185,11 @@ ARGS_LOOP:
 				// handle full option match, this allows to have - defined as an alias
 				if _, ok := stringSliceIndex(v.Aliases, "-"); ok {
 					v.Called = true
-					v.CalledAs = "-"
+					v.UsedAlias = "-"
 					continue ARGS_LOOP
 				}
 			}
 			opt := newCLIOption(currentProgramNode, "-")
-			opt.Unknown = true
 			currentProgramNode.ChildOptions["-"] = opt
 			continue ARGS_LOOP
 		}
@@ -255,15 +212,19 @@ ARGS_LOOP:
 		// different level. It is as if it was ignoring getoptions.Pass.
 		if optPair, is := isOption(iterator.Value(), mode); is {
 			// iterate over the possible cli args and try matching against expectations
-			for _, a := range optPair {
+			for _, p := range optPair {
 				matches := 0
-				for _, v := range currentProgramNode.ChildOptions {
+				for _, c := range currentProgramNode.ChildOptions {
 					// handle full option match
 					// TODO: handle partial matches
-					if _, ok := stringSliceIndex(v.Aliases, a.Option); ok {
-						v.Called = true
-						v.CalledAs = a.Option
-						v.Args = append(v.Args, a.Args...)
+					if _, ok := stringSliceIndex(c.Aliases, p.Option); ok {
+						c.Called = true
+						c.UsedAlias = p.Option
+						err := c.Save(p.Args...)
+						if err != nil {
+							// TODO: This shouldn't happen, figure out what to do about it.
+							Logger.Println("this shouldn't happen")
+						}
 						matches++
 						// TODO: Handle option having a minimum bigger than 1
 					}
@@ -277,9 +238,8 @@ ARGS_LOOP:
 					// TODO: This shouldn't append new children but update existing ones and isOption needs to be able to check if the option expects a follow up argument.
 					// Check min, check max and keep ingesting until something starts with `-` or matches a command.
 
-					opt := newCLIOption(currentProgramNode, a.Option, a.Args...)
-					opt.Unknown = true
-					currentProgramNode.ChildOptions[a.Option] = opt
+					opt := newCLIOption(currentProgramNode, p.Option, p.Args...)
+					currentProgramNode.ChildOptions[p.Option] = opt
 				}
 			}
 			continue
